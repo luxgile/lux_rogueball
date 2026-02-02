@@ -1,0 +1,43 @@
+add_rules("mode.debug", "mode.release")
+add_requires("flecs", "glm", "stb")
+
+target("rogue_ball")
+set_kind("binary")
+add_rules("sokol.shdc")
+set_languages("cxx20")
+add_files("src/*.cpp")
+add_files("src/server/*.cpp")
+add_files("src/shaders/*.glsl")
+add_packages("flecs", "glm", "stb")
+add_includedirs("libs/sokol")
+
+if is_plat("linux") then
+	add_syslinks("GL", "dl", "pthread", "X11", "Xi", "Xcursor")
+end
+
+rule("sokol.shdc")
+set_extensions(".glsl")
+on_build_file(function(target, sourcefile, opt)
+	import("core.project.depend")
+	import("utils.progress")
+
+	-- Define the output header path (e.g., build/shaders/myshader.glsl.h)
+	local headerfile = sourcefile .. ".h"
+
+	-- Only run the command if the .glsl file has actually changed
+	depend.on_changed(function()
+		progress.show(opt.progress, "${color.build.object}compiling.shader %s", sourcefile)
+
+		local slang = "glsl430"
+		os.vrunv("./sokol-shdc", {
+			"-i",
+			sourcefile,
+			"-o",
+			headerfile,
+			"-l",
+			slang,
+			"-f",
+			"sokol",
+		})
+	end, { files = sourcefile })
+end)
