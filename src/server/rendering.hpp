@@ -3,8 +3,10 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "stb/stb_image.h"
 #include <cstddef>
+#include <iostream>
 #include <vector>
 
 #include "../shaders/unlit2.glsl.h"
@@ -74,7 +76,9 @@ public:
     // Image
     int width, height, channels;
     stbi_uc *pixels =
-        stbi_load("assets/placeholder.png", &width, &height, &channels, 4);
+        stbi_load("/mnt/6f7e372e-8cd1-4f27-980d-5342a70722c5/dev/custom_games/"
+                  "rogue_ball/assets/placeholder.png",
+                  &width, &height, &channels, 4);
     sg_image_desc image_desc = {
         .width = width,
         .height = height,
@@ -125,7 +129,8 @@ public:
     bindings.views[0] = current_texture;
     sg_apply_bindings(&bindings);
 
-    auto mvp = glm::value_ptr(glm::mat4(1.0f));
+		// TODO: MVP not being passed to shader properly
+    auto mvp = glm::value_ptr(glm::mat4{1.0f});
     vs_params_t params;
     std::memcpy(&params.mvp, mvp, sizeof(params.mvp));
     auto uniforms = SG_RANGE(params);

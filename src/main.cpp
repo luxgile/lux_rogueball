@@ -20,9 +20,6 @@ public:
     sg_setup(&desc);
 
     render_server.init();
-
-    // sg_image_desc image_desc = {.width = 4, .height = 4, .pixel_format =
-    // SG_PIXELFORMAT_RGBA8}; image = sg_make_image(image_desc);
   }
 
   void frame() {
@@ -37,8 +34,7 @@ public:
 
     sg_begin_pass({.action = pass, .swapchain = sglue_swapchain()});
 
-    render_server.draw_sprite(0, 0, 0.2, 0.2);
-    render_server.draw_sprite(-0.3, 0, 0.2, 0.2);
+    render_server.draw_sprite(0, 0, 512, 512);
     render_server.flush();
 
     sg_end_pass();
@@ -57,6 +53,6 @@ sapp_desc sokol_main(int argc, char *argv[]) {
       .frame_cb = on_frame,
       .width = 1280,
       .height = 720,
-      .window_title = "C++ Sokol + Flecs",
+      .window_title = "luxlib",
   };
 }
