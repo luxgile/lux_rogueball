@@ -34,7 +34,8 @@ public:
 
     sg_begin_pass({.action = pass, .swapchain = sglue_swapchain()});
 
-		render_server.set_camera_position({0.0, 0.0, -1.0});
+		render_server.set_camera_zoon(0.5);
+		render_server.set_camera_position({0.0, 0.0, -0.1});
     render_server.draw_sprite(0, 0, 512, 512);
     render_server.flush();
 

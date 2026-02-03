@@ -32,13 +32,15 @@ struct GpuVertex2 {
 
 struct CameraData {
   vec3 position;
+  float zoom;
 
   mat4 view;
   mat4 proj;
 
   void update_mats() {
-    view = glm::lookAt(position, {0.0, 0.0, 0.0}, {0.0, 1.0, 0.0});
-    proj = glm::ortho(0.0, -800.0, 0.0, 600.0, -1.0, 1.0);
+    view = glm::translate(glm::scale(glm::mat4(1.0), {zoom, zoom, 1.0}),
+                          {position});
+    proj = glm::ortho(0.0, 1280.0, 0.0, 720.0, -1.0, 1.0);
   }
 };
 
@@ -57,6 +59,11 @@ private:
   const int MAX_VERTICES = 10000;
 
 public:
+  void set_camera_zoon(float zoom) {
+    camera.zoom = zoom;
+    camera.update_mats();
+  }
+
   void set_camera_position(vec3 position) {
     camera.position = position;
     camera.update_mats();
@@ -120,7 +127,8 @@ public:
                                     SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA};
     pip = sg_make_pipeline(&pip_desc);
 
-		set_camera_position({0.0, 0.0, -1.0});
+    camera.zoom = 1.0;
+    set_camera_position({0.0, 0.0, -1.0});
   }
 
   void draw_sprite(float x, float y, float w, float h) {
