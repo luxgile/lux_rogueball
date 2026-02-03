@@ -53,6 +53,7 @@ public:
 
     sg_begin_pass({.action = pass, .swapchain = sglue_swapchain()});
 
+		// TODO: Wrap image and view in a "texture" struct to avoid creating new views every frame.
     render_server.set_camera_zoon(1.0);
     render_server.set_camera_position({0.0, 0.0, -0.1});
     render_server.draw_sprite(image, 0, 0, 256, 256);
