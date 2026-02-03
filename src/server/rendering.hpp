@@ -1,3 +1,5 @@
+#include "glm/ext/matrix_clip_space.hpp"
+#include "glm/ext/matrix_transform.hpp"
 #include "glm/ext/vector_float2.hpp"
 #include "glm/fwd.hpp"
 #include "glm/glm.hpp"
@@ -28,12 +30,25 @@ struct GpuVertex2 {
   Srgba color;
 };
 
+struct CameraData {
+  vec3 position;
+
+  mat4 view;
+  mat4 proj;
+
+  void update_mats() {
+    view = glm::lookAt(position, {0.0, 0.0, 0.0}, {0.0, 1.0, 0.0});
+    proj = glm::ortho(0.0, -800.0, 0.0, 600.0, -1.0, 1.0);
+  }
+};
+
 class RenderingServer {
 private:
   sg_pipeline pip;
   sg_bindings bindings;
   sg_buffer vbo;
   sg_buffer ibo;
+  CameraData camera;
 
   std::vector<GpuVertex2> vertex_buffer;
   sg_view current_texture;
@@ -42,6 +57,11 @@ private:
   const int MAX_VERTICES = 10000;
 
 public:
+  void set_camera_position(vec3 position) {
+    camera.position = position;
+    camera.update_mats();
+  }
+
   void init() {
     sg_shader shader = sg_make_shader(unlit2_shader_desc(sg_query_backend()));
 
@@ -99,6 +119,8 @@ public:
                                 .dst_factor_rgb =
                                     SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA};
     pip = sg_make_pipeline(&pip_desc);
+
+		set_camera_position({0.0, 0.0, -1.0});
   }
 
   void draw_sprite(float x, float y, float w, float h) {
@@ -129,10 +151,9 @@ public:
     bindings.views[0] = current_texture;
     sg_apply_bindings(&bindings);
 
-		// TODO: MVP not being passed to shader properly
-    auto mvp = glm::value_ptr(glm::mat4{1.0f});
+    auto mvp = camera.proj * camera.view;
     vs_params_t params;
-    std::memcpy(&params.mvp, mvp, sizeof(params.mvp));
+    std::memcpy(&params.mvp, glm::value_ptr(mvp), sizeof(params.mvp));
     auto uniforms = SG_RANGE(params);
     sg_apply_uniforms(0, &uniforms);
 
