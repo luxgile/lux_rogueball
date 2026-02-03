@@ -54,9 +54,10 @@ private:
 
   std::vector<GpuVertex2> vertex_buffer;
   sg_view current_texture;
-  sg_image image;
+  sg_image current_image;
 
   const int MAX_VERTICES = 10000;
+  const int MAX_BATCHES = 20;
 
 public:
   void set_camera_zoon(float zoom) {
@@ -73,7 +74,8 @@ public:
     sg_shader shader = sg_make_shader(unlit2_shader_desc(sg_query_backend()));
 
     // Create a dynamic vertex buffer
-    sg_buffer_desc vbo_desc = {.size = MAX_VERTICES * sizeof(GpuVertex2),
+    sg_buffer_desc vbo_desc = {.size = MAX_VERTICES * sizeof(GpuVertex2) *
+                                       MAX_BATCHES,
                                .usage = {.dynamic_update = true}};
     vbo = sg_make_buffer(&vbo_desc);
 
@@ -100,21 +102,6 @@ public:
 
     current_texture = sg_alloc_view();
 
-    // Image
-    int width, height, channels;
-    stbi_uc *pixels =
-        stbi_load("/mnt/6f7e372e-8cd1-4f27-980d-5342a70722c5/dev/custom_games/"
-                  "rogue_ball/assets/placeholder.png",
-                  &width, &height, &channels, 4);
-    sg_image_desc image_desc = {
-        .width = width,
-        .height = height,
-        .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .data = {.mip_levels = {
-                     {.ptr = pixels, .size = (size_t)(width * height * 4)}}}};
-    image = sg_make_image(image_desc);
-    sg_init_view(current_texture, {.texture = {.image = image}});
-
     // Create the Pipeline
     sg_pipeline_desc pip_desc = {.shader = shader,
                                  .index_type = SG_INDEXTYPE_UINT16};
@@ -131,13 +118,15 @@ public:
     set_camera_position({0.0, 0.0, -1.0});
   }
 
-  void draw_sprite(float x, float y, float w, float h) {
+  void draw_sprite(sg_image image, float x, float y, float w, float h) {
     // If texture changes or buffer full, flush to GPU
-    // if (tex.id != current_texture.id ||
-    //     vertex_buffer.size() + 4 >= MAX_VERTICES) {
-    //   flush();
-    //   current_texture = tex;
-    // }
+    if (image.id != current_image.id ||
+        vertex_buffer.size() + 4 >= MAX_VERTICES) {
+      flush();
+      current_image = image;
+      sg_uninit_view(current_texture);
+      sg_init_view(current_texture, {.texture = {.image = current_image}});
+    }
 
     vertex_buffer.push_back({{x, y}, {0, 0}, WHITE});
     vertex_buffer.push_back({{x + w, y}, {1, 0}, WHITE});
@@ -150,12 +139,17 @@ public:
       return;
 
     // Upload local RAM buffer to GPU RAM
-    sg_update_buffer(vbo, {.ptr = vertex_buffer.data(),
-                           .size = vertex_buffer.size() * sizeof(GpuVertex2)});
+    int offset = sg_append_buffer(
+        vbo, {.ptr = vertex_buffer.data(),
+              .size = vertex_buffer.size() * sizeof(GpuVertex2)});
+    if (sg_query_buffer_overflow(vbo)) {
+      std::cout << "buffer ovewflow on vbo" << std::endl;
+      return;
+    }
 
-    // Apply state and Draw
     sg_apply_pipeline(pip);
 
+		bindings.vertex_buffer_offsets[0] = offset;
     bindings.views[0] = current_texture;
     sg_apply_bindings(&bindings);
 
