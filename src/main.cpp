@@ -1,10 +1,15 @@
 #include "flecs.h"
+#include "flecs/addons/cpp/c_types.hpp"
+#include "flecs/addons/cpp/mixins/rest/decl.hpp"
+#include "flecs/addons/cpp/mixins/stats/decl.hpp"
+#include "glm/ext/vector_float2.hpp"
 #include "server/rendering.hpp"
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_glue.h"
 #include "sokol_log.h"
 #include "stb/stb_image.h"
+#include <iterator>
 
 GpuTexture load_rgba8_image(std::string path) {
   int width, height, channels;
@@ -20,6 +25,27 @@ GpuTexture load_rgba8_image(std::string path) {
   sg_init_view(view, {.texture = {.image = image}});
   return {.view = view, .image = image};
 }
+
+struct Position2 {
+  glm::vec2 value;
+};
+
+struct Rotation2 {
+  float value;
+};
+
+struct Scale2 {
+  glm::vec2 value;
+};
+
+struct Sprite {
+  vec2 size;
+  GpuTexture texture;
+};
+
+struct Visual2Handle {
+  HandleId id;
+};
 
 class Game {
 public:
@@ -42,6 +68,37 @@ public:
     texture_circle = load_rgba8_image(
         "/mnt/6f7e372e-8cd1-4f27-980d-5342a70722c5/dev/custom_games/"
         "rogue_ball/assets/circle.png");
+
+    // world.import <flecs::stats>();
+    world.set<flecs::Rest>({});
+
+    world.observer<Visual2Handle>()
+        .event(flecs::OnAdd)
+        .each([this](Visual2Handle &handle) {
+          handle.id = render_server.new_visual2();
+          std::cout << "added visual handle " << handle.id << std::endl;
+        });
+
+    world.observer<Visual2Handle>()
+        .event(flecs::OnRemove)
+        .each([this](Visual2Handle &handle) {
+          render_server.delete_visual2(handle.id);
+          std::cout << "removed visual handle " << handle.id << std::endl;
+        });
+
+    world.system<Visual2Handle, const Sprite, const Position2>("Update Visual2")
+        .each([this](Visual2Handle &handle, const Sprite &sprite,
+                     const Position2 &pos) {
+          auto &visual = render_server.get_visual2(handle.id);
+          visual.position = pos.value;
+          visual.size = sprite.size;
+          visual.texture = sprite.texture;
+        });
+
+    world.entity()
+        .add<Visual2Handle>()
+        .set<Position2>({{0.0, 0.0}})
+        .set(Sprite{.size = {32.0, 32.0}, .texture = texture});
   }
 
   void frame() {
@@ -56,13 +113,9 @@ public:
 
     sg_begin_pass({.action = pass, .swapchain = sglue_swapchain()});
 
-    // TODO: Wrap image and view in a "texture" struct to avoid creating new
-    // views every frame.
     render_server.set_camera_zoon(1.0);
     render_server.set_camera_position({0.0, 0.0, -0.1});
-    render_server.draw_sprite(texture, 0, 0, 256, 256);
-    render_server.draw_sprite(texture_circle, 512, 512, 256, 256);
-    render_server.flush();
+    render_server.draw_visuals();
 
     sg_end_pass();
     sg_commit();

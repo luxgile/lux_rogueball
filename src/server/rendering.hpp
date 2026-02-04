@@ -8,13 +8,15 @@
 #include "sokol_log.h"
 #include "stb/stb_image.h"
 #include <cstddef>
+#include <cstdint>
 #include <iostream>
+#include <map>
+#include <unordered_map>
 #include <vector>
 
 #include "../shaders/unlit2.glsl.h"
 
 using namespace glm;
-using HandleId = uint32_t;
 
 struct Srgba {
   float r;
@@ -49,6 +51,15 @@ struct CameraData {
   }
 };
 
+typedef uint32_t HandleId;
+
+struct Visual2 {
+  bool visible;
+  vec2 position;
+  vec2 size;
+  GpuTexture texture;
+};
+
 class RenderingServer {
 private:
   sg_pipeline pip;
@@ -57,11 +68,27 @@ private:
   sg_buffer ibo;
   CameraData camera;
 
+  std::map<HandleId, Visual2> visuals;
+  std::vector<HandleId> free_ids;
+  uint32_t next_id;
+
   std::vector<GpuVertex2> vertex_buffer;
-  GpuTexture current_texture;
+  sg_view current_view;
 
   const int MAX_VERTICES = 10000;
   const int MAX_BATCHES = 20;
+
+  HandleId get_next_id() {
+    if (!free_ids.empty()) {
+      HandleId id = free_ids.back();
+      free_ids.pop_back();
+      return id;
+    }
+
+    HandleId id = {next_id};
+    next_id += 1;
+    return id;
+  }
 
 public:
   void set_camera_zoon(float zoom) {
@@ -74,6 +101,20 @@ public:
     camera.update_mats();
   }
 
+  HandleId new_visual2() {
+    HandleId id = {next_id};
+    Visual2 visual = {};
+    visuals.insert({id, visual});
+    return id;
+  }
+
+  Visual2 &get_visual2(const HandleId &id) { return visuals[id]; }
+
+  void delete_visual2(const HandleId &id) {
+    visuals.erase(id);
+    free_ids.push_back(id);
+  }
+
   void init() {
     sg_shader shader = sg_make_shader(unlit2_shader_desc(sg_query_backend()));
 
@@ -82,6 +123,7 @@ public:
                                        MAX_BATCHES,
                                .usage = {.dynamic_update = true}};
     vbo = sg_make_buffer(&vbo_desc);
+		current_view = sg_alloc_view();
 
     // Create static index buffer for quads
     uint16_t indices[6000];
@@ -120,21 +162,42 @@ public:
     set_camera_position({0.0, 0.0, -1.0});
   }
 
-  void draw_sprite(GpuTexture texture, float x, float y, float w, float h) {
-    // If texture changes or buffer full, flush to GPU
-    if (texture.view.id != current_texture.view.id ||
-        vertex_buffer.size() + 4 >= MAX_VERTICES) {
-      flush();
-      current_texture = texture;
+  void draw_visuals() {
+    std::map<uint32_t, std::vector<HandleId>> batch_map;
+    for (auto [id, visual] : visuals) {
+      batch_map[visual.texture.view.id].push_back(id);
     }
 
+    for (auto [view, ids] : batch_map) {
+      for (auto id : ids) {
+        auto visual = get_visual2(id);
+        queue_visual2(visual);
+      }
+    }
+    flush_visuals2();
+  }
+
+  void queue_visual2(Visual2 visual) {
+    // If texture changes or buffer full, flush to GPU
+    if (visual.texture.view.id != current_view.id ||
+        vertex_buffer.size() + 4 >= MAX_VERTICES) {
+      flush_visuals2();
+      std::cout << current_view.id << " to " << visual.texture.view.id
+                << std::endl;
+      current_view = visual.texture.view;
+    }
+
+    auto x = visual.position.x;
+    auto y = visual.position.y;
+    auto w = visual.size.x;
+    auto h = visual.size.y;
     vertex_buffer.push_back({{x, y}, {0, 0}, WHITE});
     vertex_buffer.push_back({{x + w, y}, {1, 0}, WHITE});
     vertex_buffer.push_back({{x + w, y + h}, {1, 1}, WHITE});
     vertex_buffer.push_back({{x, y + h}, {0, 1}, WHITE});
   }
 
-  void flush() {
+  void flush_visuals2() {
     if (vertex_buffer.empty())
       return;
 
@@ -150,7 +213,7 @@ public:
     sg_apply_pipeline(pip);
 
     bindings.vertex_buffer_offsets[0] = offset;
-    bindings.views[0] = current_texture.view;
+    bindings.views[0] = current_view;
     sg_apply_bindings(&bindings);
 
     auto mvp = camera.proj * camera.view;
