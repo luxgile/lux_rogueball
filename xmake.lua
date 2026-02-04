@@ -15,6 +15,22 @@ if is_plat("linux") then
 	add_syslinks("GL", "dl", "pthread", "X11", "Xi", "Xcursor")
 end
 
+after_build(function(target)
+	-- where the executable is placed
+	local outdir = target:targetdir()
+	local linkpath = path.join(outdir, "assets")
+
+	-- absolute path to project root assets
+	local projdir = os.projectdir()
+	local assetsdir = path.join(projdir, "assets")
+
+	if os.exists(linkpath) then
+		os.rm(linkpath)
+	end
+
+	os.runv("ln", { "-s", assetsdir, linkpath })
+end)
+
 rule("sokol.shdc")
 set_extensions(".glsl")
 on_build_file(function(target, sourcefile, opt)

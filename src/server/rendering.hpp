@@ -102,7 +102,7 @@ public:
   }
 
   HandleId new_visual2() {
-    HandleId id = {next_id};
+    HandleId id = get_next_id();
     Visual2 visual = {};
     visuals.insert({id, visual});
     return id;
@@ -123,7 +123,7 @@ public:
                                        MAX_BATCHES,
                                .usage = {.dynamic_update = true}};
     vbo = sg_make_buffer(&vbo_desc);
-		current_view = sg_alloc_view();
+    current_view = sg_alloc_view();
 
     // Create static index buffer for quads
     uint16_t indices[6000];
@@ -182,8 +182,6 @@ public:
     if (visual.texture.view.id != current_view.id ||
         vertex_buffer.size() + 4 >= MAX_VERTICES) {
       flush_visuals2();
-      std::cout << current_view.id << " to " << visual.texture.view.id
-                << std::endl;
       current_view = visual.texture.view;
     }
 
@@ -206,7 +204,6 @@ public:
         vbo, {.ptr = vertex_buffer.data(),
               .size = vertex_buffer.size() * sizeof(GpuVertex2)});
     if (sg_query_buffer_overflow(vbo)) {
-      std::cout << "buffer ovewflow on vbo" << std::endl;
       return;
     }
 

@@ -62,12 +62,8 @@ public:
 
     render_server.init();
 
-    texture = load_rgba8_image(
-        "/mnt/6f7e372e-8cd1-4f27-980d-5342a70722c5/dev/custom_games/"
-        "rogue_ball/assets/placeholder.png");
-    texture_circle = load_rgba8_image(
-        "/mnt/6f7e372e-8cd1-4f27-980d-5342a70722c5/dev/custom_games/"
-        "rogue_ball/assets/circle.png");
+    texture = load_rgba8_image("./assets/placeholder.png");
+    texture_circle = load_rgba8_image("./assets/circle.png");
 
     // world.import <flecs::stats>();
     world.set<flecs::Rest>({});
@@ -76,14 +72,12 @@ public:
         .event(flecs::OnAdd)
         .each([this](Visual2Handle &handle) {
           handle.id = render_server.new_visual2();
-          std::cout << "added visual handle " << handle.id << std::endl;
         });
 
     world.observer<Visual2Handle>()
         .event(flecs::OnRemove)
         .each([this](Visual2Handle &handle) {
           render_server.delete_visual2(handle.id);
-          std::cout << "removed visual handle " << handle.id << std::endl;
         });
 
     world.system<Visual2Handle, const Sprite, const Position2>("Update Visual2")
@@ -98,7 +92,12 @@ public:
     world.entity()
         .add<Visual2Handle>()
         .set<Position2>({{0.0, 0.0}})
-        .set(Sprite{.size = {32.0, 32.0}, .texture = texture});
+        .set(Sprite{.size = {512.0, 512.0}, .texture = texture});
+
+    world.entity()
+        .add<Visual2Handle>()
+        .set<Position2>({{512.0, 0.0}})
+        .set(Sprite{.size = {512.0, 512.0}, .texture = texture_circle});
   }
 
   void frame() {
