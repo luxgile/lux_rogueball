@@ -6,7 +6,7 @@
 #include "sokol_log.h"
 #include "stb/stb_image.h"
 
-sg_image load_rgba8_image(std::string path) {
+GpuTexture load_rgba8_image(std::string path) {
   int width, height, channels;
   stbi_uc *pixels = stbi_load(path.c_str(), &width, &height, &channels, 4);
   sg_image_desc image_desc = {
@@ -15,15 +15,18 @@ sg_image load_rgba8_image(std::string path) {
       .pixel_format = SG_PIXELFORMAT_RGBA8,
       .data = {.mip_levels = {
                    {.ptr = pixels, .size = (size_t)(width * height * 4)}}}};
-  return sg_make_image(image_desc);
+  sg_image image = sg_make_image(image_desc);
+  sg_view view = sg_alloc_view();
+  sg_init_view(view, {.texture = {.image = image}});
+  return {.view = view, .image = image};
 }
 
 class Game {
 public:
   flecs::world world;
   RenderingServer render_server;
-  sg_image image;
-  sg_image image_circle;
+  GpuTexture texture;
+  GpuTexture texture_circle;
 
   void init() {
     sg_desc desc = {};
@@ -33,10 +36,10 @@ public:
 
     render_server.init();
 
-    image = load_rgba8_image(
+    texture = load_rgba8_image(
         "/mnt/6f7e372e-8cd1-4f27-980d-5342a70722c5/dev/custom_games/"
         "rogue_ball/assets/placeholder.png");
-    image_circle = load_rgba8_image(
+    texture_circle = load_rgba8_image(
         "/mnt/6f7e372e-8cd1-4f27-980d-5342a70722c5/dev/custom_games/"
         "rogue_ball/assets/circle.png");
   }
@@ -53,11 +56,12 @@ public:
 
     sg_begin_pass({.action = pass, .swapchain = sglue_swapchain()});
 
-		// TODO: Wrap image and view in a "texture" struct to avoid creating new views every frame.
+    // TODO: Wrap image and view in a "texture" struct to avoid creating new
+    // views every frame.
     render_server.set_camera_zoon(1.0);
     render_server.set_camera_position({0.0, 0.0, -0.1});
-    render_server.draw_sprite(image, 0, 0, 256, 256);
-    render_server.draw_sprite(image_circle, 512, 512, 256, 256);
+    render_server.draw_sprite(texture, 0, 0, 256, 256);
+    render_server.draw_sprite(texture_circle, 512, 512, 256, 256);
     render_server.flush();
 
     sg_end_pass();

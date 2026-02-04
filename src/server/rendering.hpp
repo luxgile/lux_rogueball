@@ -30,6 +30,11 @@ struct GpuVertex2 {
   Srgba color;
 };
 
+struct GpuTexture {
+  sg_view view;
+  sg_image image;
+};
+
 struct CameraData {
   vec3 position;
   float zoom;
@@ -53,8 +58,7 @@ private:
   CameraData camera;
 
   std::vector<GpuVertex2> vertex_buffer;
-  sg_view current_texture;
-  sg_image current_image;
+  GpuTexture current_texture;
 
   const int MAX_VERTICES = 10000;
   const int MAX_BATCHES = 20;
@@ -100,8 +104,6 @@ public:
                 .index_buffer = ibo,
                 .samplers = {sg_make_sampler(&sampler_desc)}};
 
-    current_texture = sg_alloc_view();
-
     // Create the Pipeline
     sg_pipeline_desc pip_desc = {.shader = shader,
                                  .index_type = SG_INDEXTYPE_UINT16};
@@ -118,14 +120,12 @@ public:
     set_camera_position({0.0, 0.0, -1.0});
   }
 
-  void draw_sprite(sg_image image, float x, float y, float w, float h) {
+  void draw_sprite(GpuTexture texture, float x, float y, float w, float h) {
     // If texture changes or buffer full, flush to GPU
-    if (image.id != current_image.id ||
+    if (texture.view.id != current_texture.view.id ||
         vertex_buffer.size() + 4 >= MAX_VERTICES) {
       flush();
-      current_image = image;
-      sg_uninit_view(current_texture);
-      sg_init_view(current_texture, {.texture = {.image = current_image}});
+      current_texture = texture;
     }
 
     vertex_buffer.push_back({{x, y}, {0, 0}, WHITE});
@@ -149,8 +149,8 @@ public:
 
     sg_apply_pipeline(pip);
 
-		bindings.vertex_buffer_offsets[0] = offset;
-    bindings.views[0] = current_texture;
+    bindings.vertex_buffer_offsets[0] = offset;
+    bindings.views[0] = current_texture.view;
     sg_apply_bindings(&bindings);
 
     auto mvp = camera.proj * camera.view;
