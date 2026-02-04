@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../game.hpp"
+#include "../luxlib.hpp"
 #include "../server/rendering.hpp"
 #include "flecs.h"
 #include "glm/ext/vector_float2.hpp"

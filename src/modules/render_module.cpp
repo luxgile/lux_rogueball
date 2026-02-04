@@ -1,4 +1,5 @@
 #include "render_module.hpp"
+#include "transform_module.hpp"
 
 render_module::render_module(flecs::world &world) {
   auto &render_server = Luxlib::instance().render_server;
@@ -16,12 +17,15 @@ render_module::render_module(flecs::world &world) {
         render_server.delete_visual2(handle.id);
       });
 
-  world.system<Visual2Handle, const Sprite, const Position2>("Update Visual2")
-      .each([&render_server](Visual2Handle &handle, const Sprite &sprite,
-                             const Position2 &pos) {
+  world
+      .system<Visual2Handle, const Sprite, const WorldTransform2>(
+          "Update Visual2")
+      .kind(flecs::PreStore)
+      .each([&render_server](Visual2Handle &handle, const Sprite sprite,
+                             const WorldTransform2 &xform) {
         auto &visual = render_server.get_visual2(handle.id);
-        visual.position = pos.value;
-        visual.size = sprite.size;
+        visual.position = xform.position;
+        visual.size = sprite.size * xform.scale;
         visual.texture = sprite.texture;
       });
 }

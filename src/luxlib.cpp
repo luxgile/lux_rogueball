@@ -1,5 +1,7 @@
-#include "game.hpp"
+#include "luxlib.hpp"
 #include "engine_module.hpp"
+#include "flecs/addons/cpp/entity.hpp"
+#include "modules/transform_module.hpp"
 #include "spdlog/spdlog.h"
 
 GpuTexture load_rgba8_image(std::string path) {
@@ -16,6 +18,7 @@ GpuTexture load_rgba8_image(std::string path) {
   sg_init_view(view, {.texture = {.image = image}});
   return {.view = view, .image = image};
 }
+
 void Luxlib::init() {
   if (initialized) {
     spdlog::critical("more than one lib has been initialized");
@@ -38,19 +41,27 @@ void Luxlib::init() {
   texture = load_rgba8_image("./assets/placeholder.png");
   texture_circle = load_rgba8_image("./assets/circle.png");
 
-  world.entity()
-      .add<Visual2Handle>()
-      .set<Position2>({{0.0, 0.0}})
-      .set(Sprite{.size = {512.0, 512.0}, .texture = texture});
+  flecs::entity parent =
+      world.entity("Parent")
+          .add<Visual2Handle>()
+          .add<WorldTransform2>()
+          .set<Position2>({{0.0, 0.0}})
+          .set<Scale2>({{1.0, 1.0}})
+          .set(Sprite{.size = {512.0, 512.0}, .texture = texture});
 
-  world.entity()
+  world.entity("Child")
+      .child_of(parent)
       .add<Visual2Handle>()
+      .add<WorldTransform2>()
       .set<Position2>({{512.0, 0.0}})
+      .set<Scale2>({{1.0, 1.0}})
       .set(Sprite{.size = {512.0, 512.0}, .texture = texture_circle});
+
+  world.system<Position2>().each(
+      [](Position2 &position) { position.value.y += 1; });
 }
 
 void Luxlib::frame() {
-
   // Logic
   world.progress();
 

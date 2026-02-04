@@ -1,4 +1,4 @@
-#include "game.hpp"
+#include "luxlib.hpp"
 #include "sokol_app.h"
 
 void on_init() { Luxlib::instance().init(); }
