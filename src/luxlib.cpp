@@ -57,8 +57,8 @@ void Luxlib::init() {
       .set<Scale2>({{1.0, 1.0}})
       .set(Sprite{.size = {512.0, 512.0}, .texture = texture_circle});
 
-  world.system<Position2>().each(
-      [](Position2 &position) { position.value.y += 1; });
+  world.system<Rotation2>().each(
+      [](Rotation2 &position) { position.value += 0.01; });
 }
 
 void Luxlib::frame() {
