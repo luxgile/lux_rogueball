@@ -2,6 +2,7 @@
 
 #include "flecs.h"
 #include "glm/ext/vector_float2.hpp"
+#include "glm/glm.hpp"
 
 struct Position2 {
   glm::vec2 value;
@@ -16,9 +17,7 @@ struct Scale2 {
 };
 
 struct WorldTransform2 {
-  glm::vec2 position;
-  float rotation;
-  glm::vec2 scale;
+  glm::mat3 model;
 };
 
 struct transform_module {

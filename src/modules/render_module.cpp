@@ -24,8 +24,8 @@ render_module::render_module(flecs::world &world) {
       .each([&render_server](Visual2Handle &handle, const Sprite sprite,
                              const WorldTransform2 &xform) {
         auto &visual = render_server.get_visual2(handle.id);
-        visual.position = xform.position;
-        visual.size = sprite.size * xform.scale;
+        visual.model = xform.model;
+        visual.size = sprite.size;
         visual.texture = sprite.texture;
       });
 }

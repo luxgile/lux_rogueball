@@ -56,8 +56,7 @@ struct CameraData {
 typedef uint32_t HandleId;
 
 struct Visual2 {
-  bool visible;
-  vec2 position;
+  mat3 model;
   vec2 size;
   GpuTexture texture;
 };
@@ -187,14 +186,17 @@ public:
       current_view = visual.texture.view;
     }
 
-    auto x = visual.position.x;
-    auto y = visual.position.y;
-    auto w = visual.size.x;
-    auto h = visual.size.y;
-    vertex_buffer.push_back({{x, y}, {0, 0}, WHITE});
-    vertex_buffer.push_back({{x + w, y}, {1, 0}, WHITE});
-    vertex_buffer.push_back({{x + w, y + h}, {1, 1}, WHITE});
-    vertex_buffer.push_back({{x, y + h}, {0, 1}, WHITE});
+    float w = visual.size.x;
+    float h = visual.size.y;
+    glm::vec3 v0 = visual.model * glm::vec3(0, 0, 1);
+    glm::vec3 v1 = visual.model * glm::vec3(w, 0, 1);
+    glm::vec3 v2 = visual.model * glm::vec3(w, h, 1);
+    glm::vec3 v3 = visual.model * glm::vec3(0, h, 1);
+
+    vertex_buffer.push_back({{v0.x, v0.y}, {0, 0}, WHITE});
+    vertex_buffer.push_back({{v1.x, v1.y}, {1, 0}, WHITE});
+    vertex_buffer.push_back({{v2.x, v2.y}, {1, 1}, WHITE});
+    vertex_buffer.push_back({{v3.x, v3.y}, {0, 1}, WHITE});
   }
 
   void flush_visuals2() {
