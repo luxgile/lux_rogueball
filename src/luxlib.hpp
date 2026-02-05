@@ -18,8 +18,8 @@ private:
   Luxlib() : initialized(false) {}
 
 public:
-  flecs::world world;
   RenderingServer render_server;
+  flecs::world world;
   GpuTexture texture;
   GpuTexture texture_circle;
 

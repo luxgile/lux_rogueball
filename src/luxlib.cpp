@@ -20,6 +20,7 @@ GpuTexture load_rgba8_image(std::string path) {
 }
 
 void Luxlib::init() {
+  spdlog::info("starting luxlib...");
   if (initialized) {
     spdlog::critical("more than one lib has been initialized");
     return;
@@ -34,6 +35,7 @@ void Luxlib::init() {
 
   render_server.init();
 
+  // TODO: For some reason this crashes
   // world.import <flecs::stats>();
   world.set<flecs::Rest>({});
   world.import <engine_module>();
