@@ -1,10 +1,17 @@
 #include "render_module.hpp"
+#include "flecs/addons/cpp/component.hpp"
+#include "glm/ext/vector_float2.hpp"
 #include "transform_module.hpp"
 
 render_module::render_module(flecs::world &world) {
   auto &render_server = Luxlib::instance().render_server;
 
   world.module<render_module>();
+  world.component<cSprite>()
+      .member<glm::vec2>("size")
+      .add(flecs::With, world.component<cVisual2Handle>())
+      .add(flecs::With, world.component<cWorldTransform2>());
+
   world.observer<cVisual2Handle>()
       .event(flecs::OnAdd)
       .each([&render_server](cVisual2Handle &handle) {

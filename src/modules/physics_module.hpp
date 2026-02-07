@@ -18,6 +18,12 @@ struct sPhysicsWorld {
   b2WorldId id;
 };
 
+enum cPhysicsBodyType {
+  Dynamic,
+  Kinematic,
+  Static,
+};
+
 struct cPhysicsBody {
   b2BodyId id;
 };
@@ -27,6 +33,10 @@ struct cFriction {
 };
 
 struct cDensity {
+  float value;
+};
+
+struct cRestitution {
   float value;
 };
 

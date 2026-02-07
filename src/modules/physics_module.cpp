@@ -1,6 +1,10 @@
 #include "physics_module.hpp"
+#include "box2d/box2d.h"
 #include "box2d/id.h"
+#include "box2d/math_functions.h"
+#include "box2d/types.h"
 #include "glm/ext/vector_float2.hpp"
+#include "transform_module.hpp"
 
 physics_module::physics_module(flecs::world &world) {
   world.module<physics_module>();
@@ -41,12 +45,15 @@ physics_module::physics_module(flecs::world &world) {
       .member<b2BodyId>("id")
       .add(flecs::With, world.component<cWorldTransform2>())
       .add(flecs::With, world.component<cFriction>())
+      .add(flecs::With, world.component<cRestitution>())
       .add(flecs::With, world.component<cPhysicsShape>())
+      .add(flecs::With, world.component<cPhysicsBodyType>())
       .add(flecs::With, world.component<tPhysicsInit>())
       .add(flecs::With, world.component<cDensity>());
 
   world.component<cFriction>().member<float>("value");
   world.component<cDensity>().member<float>("value");
+  world.component<cRestitution>().member<float>("value");
   world.component<ShapeType>()
       .constant("Circle", ShapeType::Circle)
       .constant("Box", ShapeType::Box);
@@ -57,14 +64,28 @@ physics_module::physics_module(flecs::world &world) {
 
   world
       .system<const sPhysicsWorld, cPhysicsBody, const cFriction,
-              const cDensity, cPhysicsShape, cPosition2 *, cRotation2 *>()
+              const cDensity, const cRestitution, const cPhysicsBodyType,
+              cPhysicsShape, cPosition2 *, cRotation2 *>()
       .with<tPhysicsInit>()
       .kind(flecs::OnLoad)
       .each([](flecs::entity e, const sPhysicsWorld pworld, cPhysicsBody &body,
                const cFriction &friction, const cDensity &density,
-               cPhysicsShape &shape, cPosition2 *pos, cRotation2 *rot) {
+               const cRestitution &restitution,
+               const cPhysicsBodyType &body_type, cPhysicsShape &shape,
+               cPosition2 *pos, cRotation2 *rot) {
         b2BodyDef body_def = b2DefaultBodyDef();
-        body_def.type = b2_dynamicBody;
+        switch (body_type) {
+        case Dynamic:
+          body_def.type = b2_dynamicBody;
+          break;
+        case Kinematic:
+          body_def.type = b2_kinematicBody;
+          break;
+        case Static:
+          body_def.type = b2_staticBody;
+          break;
+        }
+
         if (pos)
           body_def.position = {.x = pos->value.x / pworld.pixel_to_meters,
                                .y = pos->value.y / pworld.pixel_to_meters};
@@ -75,17 +96,19 @@ physics_module::physics_module(flecs::world &world) {
         b2ShapeDef shape_def = b2DefaultShapeDef();
         shape_def.density = density.value;
         shape_def.material.friction = friction.value;
+        shape_def.material.restitution = restitution.value;
 
         switch (shape.type) {
         case Circle: {
           b2Circle circle_shape =
-              b2Circle{.center = {0.0, 0.0}, .radius = shape.size.x};
+              b2Circle{.center = {0.0, 0.0}, .radius = shape.size.x / 2.0f};
           shape.id = b2CreateCircleShape(body.id, &shape_def, &circle_shape);
           break;
         }
 
         case Box: {
-          b2Polygon box_shape = b2MakeBox(shape.size.x, shape.size.y);
+          b2Polygon box_shape =
+              b2MakeBox(shape.size.x / 2.0, shape.size.y / 2.0);
           shape.id = b2CreatePolygonShape(body.id, &shape_def, &box_shape);
           break;
         }
@@ -106,7 +129,7 @@ physics_module::physics_module(flecs::world &world) {
         b2World_Step(world.id, 0.016f, 4);
       });
 
-  // Sync position and rotation
+  // Sync position and rotation from physics
   world
       .system<const sPhysicsWorld, const cPhysicsBody, cPosition2>(
           "Sync Position to Physics")
@@ -123,5 +146,14 @@ physics_module::physics_module(flecs::world &world) {
       .each([](const cPhysicsBody &body, cRotation2 &rotation) {
         b2Rot pos = b2Body_GetRotation(body.id);
         rotation.value = b2Rot_GetAngle(pos);
+      });
+
+  // Sync physics with ecs position and rotation
+  world.observer<const cPosition2, const cRotation2, cPhysicsBody>()
+      .event(flecs::OnSet)
+      .each([](const cPosition2 &position, const cRotation2 &rotation,
+               cPhysicsBody &body) {
+        b2Body_SetTransform(body.id, {position.value.x, position.value.y},
+                            b2MakeRot(rotation.value));
       });
 }

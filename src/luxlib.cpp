@@ -3,6 +3,7 @@
 #include "flecs/addons/cpp/entity.hpp"
 #include "modules/game_module.hpp"
 #include "modules/physics_module.hpp"
+#include "modules/render_module.hpp"
 #include "modules/transform_module.hpp"
 #include "sokol_time.h"
 #include "spdlog/spdlog.h"
@@ -54,12 +55,11 @@ void Luxlib::init() {
 
   flecs::entity parent =
       world.entity("Parent")
-          .add<cVisual2Handle>()
-          .add<cWorldTransform2>()
           .set<cPosition2>({{512.0, 512.0}})
           .set<cScale2>({{1.0, 1.0}})
           .set(cSprite{.size = {32.0, 32.0}, .texture = texture})
           .add<cPhysicsBody>()
+          .set(cRestitution{.value = 0.75})
           .set(cDensity{.value = 1.0})
           .set(cPhysicsShape{.type = ShapeType::Circle, .size = {1.0, 0.0}});
 
@@ -70,6 +70,15 @@ void Luxlib::init() {
       .set<cPosition2>({{0.0, 64.0}})
       .set<cScale2>({{1.0, 1.0}})
       .set(cSprite{.size = {32.0, 32.0}, .texture = texture_circle});
+
+  world.entity("Floor")
+      .set(cPosition2{.value = {0.0, 0.0}})
+      .set(cScale2{.value = {1.0, 1.0}})
+      .set(cSprite{.size = {2000.0, 32.0}, .texture = texture})
+      .add<cPhysicsBody>()
+      .set(cPhysicsBodyType::Static)
+      .set(cDensity{.value = 1.0})
+      .set(cPhysicsShape{.type = ShapeType::Box, .size = {100.0, 1.0}});
 }
 
 void Luxlib::frame() {
