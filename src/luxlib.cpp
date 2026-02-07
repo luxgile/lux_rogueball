@@ -1,6 +1,7 @@
 #include "luxlib.hpp"
 #include "engine_module.hpp"
 #include "flecs/addons/cpp/entity.hpp"
+#include "flecs/addons/cpp/mixins/pipeline/decl.hpp"
 #include "modules/game_module.hpp"
 #include "modules/physics_module.hpp"
 #include "modules/render_module.hpp"
@@ -53,26 +54,44 @@ void Luxlib::init() {
   texture = load_rgba8_image("./assets/placeholder.png");
   texture_circle = load_rgba8_image("./assets/circle.png");
 
-  flecs::entity parent =
-      world.entity("Parent")
-          .set<cPosition2>({{512.0, 512.0}})
-          .set<cScale2>({{1.0, 1.0}})
-          .set(cSprite{.size = {32.0, 32.0}, .texture = texture})
-          .add<cPhysicsBody>()
-          .set(cRestitution{.value = 0.75})
-          .set(cDensity{.value = 1.0})
-          .set(cPhysicsShape{.type = ShapeType::Circle, .size = {1.0, 0.0}});
+  // TODO: Batch renderer bugs when too many sprites are drawn. Use ImGui to
+  // debug
+  world.system().kind(flecs::OnUpdate).run([this](flecs::iter &it) {
+    it.world()
+        .entity()
+        .set<cPosition2>({{rand() % 32, 512.0 + rand() % 32}})
+        .set<cScale2>({{1.0, 1.0}})
+        .set(cSprite{.size = {16.0, 16.0}, .texture = texture_circle})
+        .add<cPhysicsBody>()
+        .set(cRestitution{.value = 0.1})
+        .set(cDensity{.value = 1.0})
+        .set(cFriction{.value = 1.0})
+        .set(cPhysicsShape{.type = ShapeType::Circle, .size = {0.5, 0.0}});
+  });
 
-  world.entity("Child")
-      .child_of(parent)
-      .add<cVisual2Handle>()
-      .add<cWorldTransform2>()
-      .set<cPosition2>({{0.0, 64.0}})
-      .set<cScale2>({{1.0, 1.0}})
-      .set(cSprite{.size = {32.0, 32.0}, .texture = texture_circle});
+  world.entity()
+      .set(cPosition2{.value = {0.0, -350.0}})
+      .set(cRotation2{.value = 0.0})
+      .set(cScale2{.value = {1.0, 1.0}})
+      .set(cSprite{.size = {2000.0, 32.0}, .texture = texture})
+      .add<cPhysicsBody>()
+      .set(cPhysicsBodyType::Static)
+      .set(cDensity{.value = 1.0})
+      .set(cPhysicsShape{.type = ShapeType::Box, .size = {100.0, 1.0}});
 
-  world.entity("Floor")
-      .set(cPosition2{.value = {0.0, 0.0}})
+  world.entity()
+      .set(cPosition2{.value = {600.0, 0.0}})
+      .set(cRotation2{.value = 90.0})
+      .set(cScale2{.value = {1.0, 1.0}})
+      .set(cSprite{.size = {2000.0, 32.0}, .texture = texture})
+      .add<cPhysicsBody>()
+      .set(cPhysicsBodyType::Static)
+      .set(cDensity{.value = 1.0})
+      .set(cPhysicsShape{.type = ShapeType::Box, .size = {100.0, 1.0}});
+
+  world.entity()
+      .set(cPosition2{.value = {-600.0, -350.0}})
+      .set(cRotation2{.value = 90.0})
       .set(cScale2{.value = {1.0, 1.0}})
       .set(cSprite{.size = {2000.0, 32.0}, .texture = texture})
       .add<cPhysicsBody>()

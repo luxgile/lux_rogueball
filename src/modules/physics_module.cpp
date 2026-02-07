@@ -4,6 +4,7 @@
 #include "box2d/math_functions.h"
 #include "box2d/types.h"
 #include "glm/ext/vector_float2.hpp"
+#include "glm/trigonometric.hpp"
 #include "transform_module.hpp"
 
 physics_module::physics_module(flecs::world &world) {
@@ -90,7 +91,7 @@ physics_module::physics_module(flecs::world &world) {
           body_def.position = {.x = pos->value.x / pworld.pixel_to_meters,
                                .y = pos->value.y / pworld.pixel_to_meters};
         if (rot)
-          body_def.rotation = b2MakeRot(rot->value);
+          body_def.rotation = b2MakeRot(glm::radians(rot->value));
         body.id = b2CreateBody(pworld.id, &body_def);
 
         b2ShapeDef shape_def = b2DefaultShapeDef();
@@ -145,15 +146,21 @@ physics_module::physics_module(flecs::world &world) {
       .kind(flecs::OnUpdate)
       .each([](const cPhysicsBody &body, cRotation2 &rotation) {
         b2Rot pos = b2Body_GetRotation(body.id);
-        rotation.value = b2Rot_GetAngle(pos);
+        rotation.value = glm::degrees(b2Rot_GetAngle(pos));
       });
 
   // Sync physics with ecs position and rotation
-  world.observer<const cPosition2, const cRotation2, cPhysicsBody>()
-      .event(flecs::OnSet)
-      .each([](const cPosition2 &position, const cRotation2 &rotation,
-               cPhysicsBody &body) {
-        b2Body_SetTransform(body.id, {position.value.x, position.value.y},
-                            b2MakeRot(rotation.value));
-      });
+  // world.observer<const cPosition2, const cRotation2, cPhysicsBody>()
+  //     .without<tPhysicsInit>()
+  //     .event(flecs::OnSet)
+  //     .each([](flecs::entity e, const cPosition2 &position,
+  //              const cRotation2 &rotation, cPhysicsBody &body) {
+  //       if (!b2Body_IsValid(body.id)) {
+  //         spdlog::warn("Entity {} has an invalid physics body", e.id());
+  //         return;
+  //       }
+  //
+  //       b2Body_SetTransform(body.id, {position.value.x, position.value.y},
+  //                           b2MakeRot(rotation.value));
+  //     });
 }

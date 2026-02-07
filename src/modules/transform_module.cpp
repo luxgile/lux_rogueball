@@ -1,12 +1,15 @@
 #include "transform_module.hpp"
 #include "glm/ext/vector_float2.hpp"
 #include "glm/glm.hpp"
+#include "glm/trigonometric.hpp"
 
 transform_module::transform_module(flecs::world &world) {
   world.module<transform_module>();
 
   world.component<glm::vec2>().member<float>("x").member<float>("y");
   world.component<cPosition2>().member<glm::vec2>("value");
+  world.component<cRotation2>().member<float>("value");
+  world.component<cScale2>().member<glm::vec2>("value");
 
   world.component<cWorldTransform2>()
       .add(flecs::With, world.component<cPosition2>())
@@ -26,8 +29,9 @@ transform_module::transform_module(flecs::world &world) {
         // Build Local Matrix
         glm::mat3 local = glm::mat3(1.0f);
 
-        float cos_a = cos(local_rot.value);
-        float sin_a = sin(local_rot.value);
+        float rad = glm::radians(local_rot.value);
+        float cos_a = cos(rad);
+        float sin_a = sin(rad);
 
         local[0][0] = cos_a * local_scale.value.x;
         local[1][0] = -sin_a * local_scale.value.y;

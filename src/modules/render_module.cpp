@@ -1,4 +1,5 @@
 #include "render_module.hpp"
+#include "flecs/addons/cpp/c_types.hpp"
 #include "flecs/addons/cpp/component.hpp"
 #include "glm/ext/vector_float2.hpp"
 #include "transform_module.hpp"
@@ -7,10 +8,13 @@ render_module::render_module(flecs::world &world) {
   auto &render_server = Luxlib::instance().render_server;
 
   world.module<render_module>();
+
   world.component<cSprite>()
       .member<glm::vec2>("size")
       .add(flecs::With, world.component<cVisual2Handle>())
       .add(flecs::With, world.component<cWorldTransform2>());
+
+  world.component<cVisual2Handle>().member<HandleId>("id");
 
   world.observer<cVisual2Handle>()
       .event(flecs::OnAdd)
@@ -22,6 +26,14 @@ render_module::render_module(flecs::world &world) {
       .event(flecs::OnRemove)
       .each([&render_server](cVisual2Handle &handle) {
         render_server.delete_visual2(handle.id);
+      });
+
+  world.observer<const cSprite, cVisual2Handle>()
+      .event(flecs::OnSet)
+      .each([&render_server](const cSprite &sprite, cVisual2Handle &handle) {
+        auto &visual = render_server.get_visual2(handle.id);
+        visual.size = sprite.size;
+        visual.texture = sprite.texture;
       });
 
   world
