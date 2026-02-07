@@ -1,4 +1,6 @@
 #include "rendering.hpp"
+#include "spdlog/spdlog.h"
+#include <vector>
 
 HandleId RenderingServer::get_next_id() {
   if (!free_ids.empty()) {
@@ -48,8 +50,9 @@ void RenderingServer::init() {
   current_view = sg_alloc_view();
 
   // Create static index buffer for quads
-  uint16_t indices[6000];
-  for (int i = 0, v = 0; i < 6000; i += 6, v += 4) {
+  const int MAX_INDICES = (MAX_VERTICES / 4) * 6;
+  std::vector<uint16_t> indices(MAX_INDICES);
+  for (int i = 0, v = 0; i < MAX_INDICES; i += 6, v += 4) {
     indices[i + 0] = v + 0;
     indices[i + 1] = v + 1;
     indices[i + 2] = v + 2;
@@ -58,8 +61,11 @@ void RenderingServer::init() {
     indices[i + 5] = v + 3;
   }
 
-  sg_buffer_desc buffer_desc = {.usage = {.index_buffer = true},
-                                .data = SG_RANGE(indices)};
+  sg_buffer_desc buffer_desc = {
+      .usage = {.index_buffer = true},
+      .data = {.ptr = indices.data(),
+               .size = indices.size() * sizeof(uint16_t)}};
+
   ibo = sg_make_buffer(&buffer_desc);
 
   sg_sampler_desc sampler_desc = {.min_filter = SG_FILTER_LINEAR,
@@ -141,6 +147,12 @@ void RenderingServer::flush_visuals2() {
     return;
   }
 
+  if (sg_query_buffer_overflow(vbo)) {
+    spdlog::error("sokol buffer overflow! increase vbo size.");
+    vertex_buffer.clear();
+    return;
+  }
+
   sg_apply_pipeline(pip);
 
   bindings.vertex_buffer_offsets[0] = offset;
@@ -153,6 +165,7 @@ void RenderingServer::flush_visuals2() {
   auto uniforms = SG_RANGE(params);
   sg_apply_uniforms(0, &uniforms);
 
-  sg_draw(0, (vertex_buffer.size() / 4) * 6, 1);
+  // spdlog::info("vertex buffer size: {}", vertex_buffer.size());
+  sg_draw(0, (int)(vertex_buffer.size() / 4) * 6, 1);
   vertex_buffer.clear();
 }
