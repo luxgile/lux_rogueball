@@ -6,12 +6,12 @@
 #include "glm/ext/vector_float2.hpp"
 #include "transform_module.hpp"
 
-struct Sprite {
+struct cSprite {
   glm::vec2 size;
   GpuTexture texture;
 };
 
-struct Visual2Handle {
+struct cVisual2Handle {
   HandleId id;
 };
 

@@ -1,7 +1,10 @@
 #include "luxlib.hpp"
 #include "engine_module.hpp"
 #include "flecs/addons/cpp/entity.hpp"
+#include "modules/game_module.hpp"
+#include "modules/physics_module.hpp"
 #include "modules/transform_module.hpp"
+#include "sokol_time.h"
 #include "spdlog/spdlog.h"
 
 GpuTexture load_rgba8_image(std::string path) {
@@ -22,50 +25,58 @@ GpuTexture load_rgba8_image(std::string path) {
 void Luxlib::init() {
   spdlog::info("starting luxlib...");
   if (initialized) {
-    spdlog::critical("more than one lib has been initialized");
+    spdlog::critical("more than one lib has been started");
     return;
   }
 
   initialized = true;
 
+  // Grafics setup
   sg_desc desc = {};
   desc.logger.func = slog_func;
   desc.environment = sglue_environment();
   sg_setup(&desc);
 
+  // Time setup
+  stm_setup();
+  last_time = stm_now();
+
   render_server.init();
 
-  // TODO: For some reason this crashes
+  // TODO: For some reason this crashes in debug mode
   // world.import <flecs::stats>();
   world.set<flecs::Rest>({});
   world.import <engine_module>();
+  world.import <game_module>();
 
   texture = load_rgba8_image("./assets/placeholder.png");
   texture_circle = load_rgba8_image("./assets/circle.png");
 
   flecs::entity parent =
       world.entity("Parent")
-          .add<Visual2Handle>()
-          .add<WorldTransform2>()
-          .set<Position2>({{0.0, 0.0}})
-          .set<Scale2>({{1.0, 1.0}})
-          .set(Sprite{.size = {512.0, 512.0}, .texture = texture});
+          .add<cVisual2Handle>()
+          .add<cWorldTransform2>()
+          .set<cPosition2>({{512.0, 512.0}})
+          .set<cScale2>({{1.0, 1.0}})
+          .set(cSprite{.size = {32.0, 32.0}, .texture = texture})
+          .add<cPhysicsBody>()
+          .set(cDensity{.value = 1.0})
+          .set(cPhysicsShape{.type = ShapeType::Circle, .size = {1.0, 0.0}});
 
   world.entity("Child")
       .child_of(parent)
-      .add<Visual2Handle>()
-      .add<WorldTransform2>()
-      .set<Position2>({{512.0, 0.0}})
-      .set<Scale2>({{1.0, 1.0}})
-      .set(Sprite{.size = {512.0, 512.0}, .texture = texture_circle});
-
-  world.system<Rotation2>().each(
-      [](Rotation2 &position) { position.value += 0.01; });
+      .add<cVisual2Handle>()
+      .add<cWorldTransform2>()
+      .set<cPosition2>({{0.0, 64.0}})
+      .set<cScale2>({{1.0, 1.0}})
+      .set(cSprite{.size = {32.0, 32.0}, .texture = texture_circle});
 }
 
 void Luxlib::frame() {
+
   // Logic
-  world.progress();
+  float dt = (float)stm_sec(stm_laptime(&last_time));
+  world.progress(dt);
 
   // Render
   sg_pass_action pass = {};

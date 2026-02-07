@@ -4,19 +4,19 @@
 #include "glm/ext/vector_float2.hpp"
 #include "glm/glm.hpp"
 
-struct Position2 {
+struct cPosition2 {
   glm::vec2 value;
 };
 
-struct Rotation2 {
+struct cRotation2 {
   float value;
 };
 
-struct Scale2 {
+struct cScale2 {
   glm::vec2 value;
 };
 
-struct WorldTransform2 {
+struct cWorldTransform2 {
   glm::mat3 model;
 };
 

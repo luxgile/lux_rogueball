@@ -2,6 +2,7 @@
 
 #include "flecs.h"
 #include "flecs/addons/cpp/mixins/meta/decl.hpp"
+#include "glm/fwd.hpp"
 #include "server/rendering.hpp"
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -14,6 +15,7 @@ GpuTexture load_rgba8_image(std::string path);
 class Luxlib {
 private:
   bool initialized;
+  uint64_t last_time = 0;
 
   Luxlib() : initialized(false) {}
 

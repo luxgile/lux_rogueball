@@ -1,24 +1,28 @@
 #include "transform_module.hpp"
+#include "glm/ext/vector_float2.hpp"
 #include "glm/glm.hpp"
 
 transform_module::transform_module(flecs::world &world) {
   world.module<transform_module>();
 
-  world.component<WorldTransform2>()
-      .add(flecs::With, world.component<Position2>())
-      .add(flecs::With, world.component<Rotation2>())
-      .add(flecs::With, world.component<Scale2>());
+  world.component<glm::vec2>().member<float>("x").member<float>("y");
+  world.component<cPosition2>().member<glm::vec2>("value");
+
+  world.component<cWorldTransform2>()
+      .add(flecs::With, world.component<cPosition2>())
+      .add(flecs::With, world.component<cRotation2>())
+      .add(flecs::With, world.component<cScale2>());
 
   world
-      .system<WorldTransform2, const Position2, const Rotation2, const Scale2,
-              const WorldTransform2 *>("Update World Transform")
+      .system<cWorldTransform2, const cPosition2, const cRotation2,
+              const cScale2, const cWorldTransform2 *>("Update World Transform")
       .term_at(4)
       .parent()
       .cascade()
       .optional()
-      .each([](WorldTransform2 &world_out, const Position2 &local_pos,
-               const Rotation2 &local_rot, const Scale2 &local_scale,
-               const WorldTransform2 *parent_world) {
+      .each([](cWorldTransform2 &world_out, const cPosition2 &local_pos,
+               const cRotation2 &local_rot, const cScale2 &local_scale,
+               const cWorldTransform2 *parent_world) {
         // Build Local Matrix
         glm::mat3 local = glm::mat3(1.0f);
 

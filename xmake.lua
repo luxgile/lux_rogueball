@@ -1,5 +1,5 @@
 add_rules("mode.debug", "mode.release")
-add_requires("flecs", "glm", "stb", "spdlog")
+add_requires("flecs", "glm", "stb", "spdlog", "box2d")
 
 target("rogue_ball")
 set_kind("binary")
@@ -9,7 +9,7 @@ add_files("src/*.cpp")
 add_files("src/server/*.cpp")
 add_files("src/modules/*.cpp")
 add_files("src/shaders/*.glsl")
-add_packages("flecs", "glm", "stb", "spdlog")
+add_packages("flecs", "glm", "stb", "spdlog", "box2d")
 add_includedirs("libs/sokol")
 
 if is_plat("linux") then
