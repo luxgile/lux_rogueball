@@ -1,5 +1,5 @@
 add_rules("mode.debug", "mode.release")
-add_requires("flecs", "glm", "stb", "spdlog", "box2d")
+add_requires("flecs", "glm", "stb", "spdlog", "box2d", "imgui v1.92.5-docking")
 
 target("rogue_ball")
 set_kind("binary")
@@ -9,8 +9,9 @@ add_files("src/*.cpp")
 add_files("src/server/*.cpp")
 add_files("src/modules/*.cpp")
 add_files("src/shaders/*.glsl")
-add_packages("flecs", "glm", "stb", "spdlog", "box2d")
+add_packages("flecs", "glm", "stb", "spdlog", "box2d", "imgui")
 add_includedirs("libs/sokol")
+add_includedirs("libs/sokol/util")
 
 if is_plat("linux") then
 	add_syslinks("GL", "dl", "pthread", "X11", "Xi", "Xcursor")

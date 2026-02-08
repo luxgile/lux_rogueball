@@ -36,4 +36,6 @@ public:
   void init();
 
   void frame();
+
+  void input(const sapp_event *event);
 };

@@ -2,10 +2,13 @@
 #include "engine_module.hpp"
 #include "flecs/addons/cpp/entity.hpp"
 #include "flecs/addons/cpp/mixins/pipeline/decl.hpp"
+#include "imgui.h"
 #include "modules/game_module.hpp"
 #include "modules/physics_module.hpp"
 #include "modules/render_module.hpp"
 #include "modules/transform_module.hpp"
+#include "server/rendering.hpp"
+#include "sokol_imgui.h"
 #include "sokol_time.h"
 #include "spdlog/spdlog.h"
 
@@ -43,6 +46,12 @@ void Luxlib::init() {
   stm_setup();
   last_time = stm_now();
 
+  // Imgui setup
+  simgui_desc_t simgui_desc = {};
+  simgui_desc.logger.func = slog_func;
+  simgui_setup(&simgui_desc);
+  ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
   render_server.init();
 
   // TODO: For some reason this crashes in debug mode
@@ -54,8 +63,7 @@ void Luxlib::init() {
   texture = load_rgba8_image("./assets/placeholder.png");
   texture_circle = load_rgba8_image("./assets/circle.png");
 
-  // TODO: Batch renderer bugs when too many sprites are drawn. Use ImGui to
-  // debug
+  // TODO: Add imgui support
   world.system().kind(flecs::OnUpdate).run([this](flecs::iter &it) {
     it.world()
         .entity()
@@ -104,6 +112,8 @@ void Luxlib::frame() {
 
   // Logic
   float dt = (float)stm_sec(stm_laptime(&last_time));
+  simgui_new_frame({1280, 720, dt, sapp_dpi_scale()});
+  ImGui::ShowDemoWindow();
   world.progress(dt);
 
   // Render
@@ -117,6 +127,9 @@ void Luxlib::frame() {
   render_server.set_camera_position({0.0, 0.0, -0.1});
   render_server.draw_visuals();
 
+  simgui_render();
+
   sg_end_pass();
   sg_commit();
 }
+void Luxlib::input(const sapp_event *event) { simgui_handle_event(event); }
