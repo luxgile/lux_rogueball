@@ -60,52 +60,27 @@ void Luxlib::init() {
   world.import <engine_module>();
   world.import <game_module>();
 
-  texture = load_rgba8_image("./assets/placeholder.png");
-  texture_circle = load_rgba8_image("./assets/circle.png");
+  world.system<cSprite>().kind(flecs::OnLoad).each([](cSprite &sprite) {
+    if (sprite.texture.view.id != 0)
+      return;
 
-  // TODO: Add imgui support
-  world.system().kind(flecs::OnUpdate).run([this](flecs::iter &it) {
-    it.world()
-        .entity()
-        .set<cPosition2>({{rand() % 32, 512.0 + rand() % 32}})
-        .set<cScale2>({{1.0, 1.0}})
-        .set(cSprite{.size = {16.0, 16.0}, .texture = texture_circle})
-        .add<cPhysicsBody>()
-        .set(cRestitution{.value = 0.1})
-        .set(cDensity{.value = 1.0})
-        .set(cFriction{.value = 1.0})
-        .set(cPhysicsShape{.type = ShapeType::Circle, .size = {0.5, 0.0}});
+    sprite.texture = load_rgba8_image(sprite.path);
   });
 
-  world.entity()
-      .set(cPosition2{.value = {0.0, -350.0}})
-      .set(cRotation2{.value = 0.0})
-      .set(cScale2{.value = {1.0, 1.0}})
-      .set(cSprite{.size = {2000.0, 32.0}, .texture = texture})
-      .add<cPhysicsBody>()
-      .set(cPhysicsBodyType::Static)
-      .set(cDensity{.value = 1.0})
-      .set(cPhysicsShape{.type = ShapeType::Box, .size = {100.0, 1.0}});
+  // world.system().kind(flecs::OnUpdate).run([this](flecs::iter &it) {
+  //   it.world()
+  //       .entity()
+  //       .set<cPosition2>({{rand() % 32, 512.0 + rand() % 32}})
+  //       .set<cScale2>({{1.0, 1.0}})
+  //       .set(cSprite{.size = {16.0, 16.0}, .texture = texture_circle})
+  //       .add<cPhysicsBody>()
+  //       .set(cRestitution{.value = 0.1})
+  //       .set(cDensity{.value = 1.0})
+  //       .set(cFriction{.value = 1.0})
+  //       .set(cPhysicsShape{.type = ShapeType::Circle, .size = {0.5, 0.0}});
+  // });
 
-  world.entity()
-      .set(cPosition2{.value = {600.0, 0.0}})
-      .set(cRotation2{.value = 90.0})
-      .set(cScale2{.value = {1.0, 1.0}})
-      .set(cSprite{.size = {2000.0, 32.0}, .texture = texture})
-      .add<cPhysicsBody>()
-      .set(cPhysicsBodyType::Static)
-      .set(cDensity{.value = 1.0})
-      .set(cPhysicsShape{.type = ShapeType::Box, .size = {100.0, 1.0}});
-
-  world.entity()
-      .set(cPosition2{.value = {-600.0, -350.0}})
-      .set(cRotation2{.value = 90.0})
-      .set(cScale2{.value = {1.0, 1.0}})
-      .set(cSprite{.size = {2000.0, 32.0}, .texture = texture})
-      .add<cPhysicsBody>()
-      .set(cPhysicsBodyType::Static)
-      .set(cDensity{.value = 1.0})
-      .set(cPhysicsShape{.type = ShapeType::Box, .size = {100.0, 1.0}});
+  world.script_run_file("./assets/game.flecs");
 }
 
 void Luxlib::frame() {
@@ -113,7 +88,6 @@ void Luxlib::frame() {
   // Logic
   float dt = (float)stm_sec(stm_laptime(&last_time));
   simgui_new_frame({1280, 720, dt, sapp_dpi_scale()});
-  ImGui::ShowDemoWindow();
   world.progress(dt);
 
   // Render

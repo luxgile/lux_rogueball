@@ -9,7 +9,17 @@ render_module::render_module(flecs::world &world) {
 
   world.module<render_module>();
 
+  world.component<std::string>()
+      .opaque(flecs::String)
+      .serialize([](const flecs::serializer *s, const std::string *data) {
+        const char *str = data->c_str();
+        return s->value(flecs::String, &str);
+      })
+      .assign_string(
+          [](std::string *data, const char *value) { *data = value; });
+
   world.component<cSprite>()
+      .member<std::string>("path")
       .member<glm::vec2>("size")
       .add(flecs::With, world.component<cVisual2Handle>())
       .add(flecs::With, world.component<cWorldTransform2>());

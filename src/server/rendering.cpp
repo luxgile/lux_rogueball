@@ -111,9 +111,9 @@ void RenderingServer::queue_visual2(Visual2 visual) {
     return;
   }
 
-  if (vertex_buffer.size() + 4 >= MAX_VERTICES) {
-    spdlog::warn("Reached max vertex render batch");
-  }
+  // if (vertex_buffer.size() + 4 >= MAX_VERTICES) {
+  //   spdlog::warn("Reached max vertex render batch");
+  // }
 
   // If texture changes or buffer full, flush to GPU
   if (visual.texture.view.id != current_view.id ||

@@ -7,6 +7,7 @@
 #include "transform_module.hpp"
 
 struct cSprite {
+  std::string path;
   glm::vec2 size;
   GpuTexture texture;
 };
