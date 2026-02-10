@@ -89,6 +89,17 @@ void RenderingServer::init() {
 
   camera.zoom = 1.0;
   set_camera_position({0.0, 0.0, -1.0});
+
+  // Create white texture
+  uint32_t white_pixel = 0xFFFFFFFF;
+  sg_image_desc img_desc = {
+      .width = 1,
+      .height = 1,
+      .data = {
+          .mip_levels = {{.ptr = &white_pixel, .size = sizeof(white_pixel)}}}};
+  white_texture.image = sg_make_image(&img_desc);
+  sg_view_desc view_desc = {.texture = {.image = white_texture.image}};
+  white_texture.view = sg_make_view(&view_desc);
 }
 
 void RenderingServer::draw_visuals() {
@@ -112,17 +123,6 @@ void RenderingServer::queue_visual2(Visual2 visual) {
     return;
   }
 
-  // if (vertex_buffer.size() + 4 >= MAX_VERTICES) {
-  //   spdlog::warn("Reached max vertex render batch");
-  // }
-
-  // If texture changes or buffer full, flush to GPU
-  if (visual.texture.view.id != current_view.id ||
-      vertex_buffer.size() + 4 >= MAX_VERTICES) {
-    flush_visuals2();
-    current_view = visual.texture.view;
-  }
-
   float w = visual.size.x / 2.0f;
   float h = visual.size.y / 2.0f;
   glm::vec3 v0 = visual.model * glm::vec3(-w, -h, 1);
@@ -130,10 +130,7 @@ void RenderingServer::queue_visual2(Visual2 visual) {
   glm::vec3 v2 = visual.model * glm::vec3(w, h, 1);
   glm::vec3 v3 = visual.model * glm::vec3(-w, h, 1);
 
-  vertex_buffer.push_back({{v0.x, v0.y}, {0, 0}, WHITE});
-  vertex_buffer.push_back({{v1.x, v1.y}, {1, 0}, WHITE});
-  vertex_buffer.push_back({{v2.x, v2.y}, {1, 1}, WHITE});
-  vertex_buffer.push_back({{v3.x, v3.y}, {0, 1}, WHITE});
+  push_quad(v0, v1, v2, v3, WHITE, &visual.texture);
 }
 
 void RenderingServer::flush_visuals2() {
@@ -174,4 +171,60 @@ void RenderingServer::flush_visuals2() {
 void RenderingServer::set_camera_resolution(vec2 size) {
   camera.size = size;
   camera.update_mats();
+}
+
+void RenderingServer::draw_line(vec2 p1, vec2 p2, Srgba color,
+                                float thickness) {
+  vec2 dir = p2 - p1;
+  float length = glm::length(dir);
+  if (length < 0.0001f)
+    return;
+  vec2 normal = vec2(-dir.y, dir.x) / length;
+  vec2 offset = normal * (thickness * 0.5f);
+
+  vec2 v0 = p1 - offset;
+  vec2 v1 = p2 - offset;
+  vec2 v2 = p2 + offset;
+  vec2 v3 = p1 + offset;
+
+  push_quad(v0, v1, v2, v3, color, nullptr);
+}
+
+void RenderingServer::draw_point(vec2 p, Srgba color, float size) {
+  draw_rect(p, vec2(size, size), color, true);
+}
+
+void RenderingServer::draw_rect(vec2 p, vec2 size, Srgba color, bool filled) {
+  if (filled) {
+    vec2 half_size = size * 0.5f;
+    vec2 v0 = p + vec2(-half_size.x, -half_size.y);
+    vec2 v1 = p + vec2(half_size.x, -half_size.y);
+    vec2 v2 = p + vec2(half_size.x, half_size.y);
+    vec2 v3 = p + vec2(-half_size.x, half_size.y);
+
+    push_quad(v0, v1, v2, v3, color, nullptr);
+  } else {
+    vec2 half_size = size * 0.5f;
+    vec2 p1 = p + vec2(-half_size.x, -half_size.y);
+    vec2 p2 = p + vec2(half_size.x, -half_size.y);
+    vec2 p3 = p + vec2(half_size.x, half_size.y);
+    vec2 p4 = p + vec2(-half_size.x, half_size.y);
+
+    draw_line(p1, p2, color);
+    draw_line(p2, p3, color);
+    draw_line(p3, p4, color);
+    draw_line(p4, p1, color);
+  }
+}
+
+void RenderingServer::draw_circle(vec2 center, float radius, Srgba color,
+                                  int segments) {
+  float angle_step = 2.0f * M_PI / segments;
+  for (int i = 0; i < segments; i++) {
+    float angle1 = i * angle_step;
+    float angle2 = (i + 1) * angle_step;
+    vec2 p1 = center + vec2(cos(angle1), sin(angle1)) * radius;
+    vec2 p2 = center + vec2(cos(angle2), sin(angle2)) * radius;
+    draw_line(p1, p2, color);
+  }
 }

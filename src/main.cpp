@@ -12,6 +12,7 @@ sapp_desc sokol_main(int argc, char *argv[]) {
       .event_cb = on_input,
       .width = 1280,
       .height = 720,
+      .sample_count = 8,
       .window_title = "luxlib",
   };
 }

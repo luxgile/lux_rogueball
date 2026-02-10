@@ -1,4 +1,5 @@
 #pragma once
+#include "modules/input_module.hpp"
 #include "modules/physics_module.hpp"
 #include "modules/render_module.hpp"
 #include "modules/transform_module.hpp"
@@ -49,5 +50,6 @@ struct engine_module {
     world.import <transform_module>();
     world.import <render_module>();
     world.import <physics_module>();
+    world.import <input_module>();
   }
 };

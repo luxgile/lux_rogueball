@@ -2,8 +2,9 @@
 #include "engine_module.hpp"
 #include "flecs/addons/cpp/entity.hpp"
 #include "flecs/addons/cpp/mixins/pipeline/decl.hpp"
+#include "game/game_module.hpp"
+#include "glm/ext/vector_float2.hpp"
 #include "imgui.h"
-#include "modules/game_module.hpp"
 #include "modules/physics_module.hpp"
 #include "modules/render_module.hpp"
 #include "modules/transform_module.hpp"
@@ -55,7 +56,7 @@ void Luxlib::init() {
   render_server.init();
 
   // TODO: For some reason this crashes in debug mode
-  world.import <flecs::stats>();
+  // world.import <flecs::stats>();
   world.set<flecs::Rest>({});
   world.import <engine_module>();
   world.import <game_module>();
@@ -95,6 +96,7 @@ void Luxlib::frame() {
   sg_end_pass();
   sg_commit();
 }
+
 void Luxlib::input(const sapp_event *event) {
   simgui_handle_event(event);
 
@@ -107,5 +109,20 @@ void Luxlib::input(const sapp_event *event) {
   if (event->type == SAPP_EVENTTYPE_RESIZED) {
     world.set(sWindowSize{.width = event->window_width,
                           .height = event->window_height});
+  }
+
+  auto input = world.try_get_mut<sInputState>();
+  if (!input)
+    return;
+  if (event->type == SAPP_EVENTTYPE_MOUSE_MOVE) {
+    input->mouse_viewport_position = {event->mouse_x, event->mouse_y};
+  }
+
+  if (event->type == SAPP_EVENTTYPE_KEY_DOWN) {
+    input->pressed_keys.insert({event->key_code, true});
+  }
+
+  if (event->type == SAPP_EVENTTYPE_KEY_UP) {
+    input->pressed_keys.insert({event->key_code, false});
   }
 }

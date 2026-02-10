@@ -73,6 +73,7 @@ private:
   sg_buffer vbo;
   sg_buffer ibo;
   CameraData camera;
+  GpuTexture white_texture;
 
   std::map<HandleId, Visual2> visuals;
   std::vector<HandleId> free_ids;
@@ -85,6 +86,21 @@ private:
   const int MAX_BATCHES = 20;
 
   HandleId get_next_id();
+
+  void push_quad(vec2 v0, vec2 v1, vec2 v2, vec2 v3, Srgba color,
+                 GpuTexture *texture) {
+    GpuTexture *t = texture ? texture : &white_texture;
+    if (t->view.id != current_view.id ||
+        vertex_buffer.size() + 4 >= MAX_VERTICES) {
+      flush_visuals2();
+      current_view = t->view;
+    }
+
+    vertex_buffer.push_back({v0, {0, 0}, color});
+    vertex_buffer.push_back({v1, {1, 0}, color});
+    vertex_buffer.push_back({v2, {1, 1}, color});
+    vertex_buffer.push_back({v3, {0, 1}, color});
+  }
 
 public:
   void set_camera_zoom(float zoom);
@@ -106,4 +122,8 @@ public:
   void queue_visual2(Visual2 visual);
 
   void flush_visuals2();
+  void draw_line(vec2 p1, vec2 p2, Srgba color, float thickness = 1.0f);
+  void draw_point(vec2 p, Srgba color, float size = 1.0f);
+  void draw_rect(vec2 p, vec2 size, Srgba color, bool filled = false);
+  void draw_circle(vec2 center, float radius, Srgba color, int segments = 32);
 };
