@@ -9,9 +9,28 @@ struct sTime {
   float delta;
 };
 
+struct sWindowSize {
+  int width;
+  int height;
+};
+
 struct engine_module {
   engine_module(flecs::world &world) {
     world.module<engine_module>();
+
+    world.component<sWindowSize>()
+        .member<int>("width")
+        .member<int>("height")
+        .add(flecs::Singleton);
+
+    world.observer<sWindowSize>()
+        .event(flecs::OnSet)
+        .each([](sWindowSize &size) {
+          Luxlib::instance().render_server.set_camera_resolution(
+              {size.width, size.height});
+        });
+
+    world.set<sWindowSize>({1280, 720});
 
     world.component<sTime>()
         .member<float>("elapsed")

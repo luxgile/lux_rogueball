@@ -1,4 +1,5 @@
 #include "rendering.hpp"
+#include "../luxlib.hpp"
 #include "spdlog/spdlog.h"
 #include <vector>
 
@@ -13,7 +14,7 @@ HandleId RenderingServer::get_next_id() {
   next_id += 1;
   return id;
 }
-void RenderingServer::set_camera_zoon(float zoom) {
+void RenderingServer::set_camera_zoom(float zoom) {
   camera.zoom = zoom;
   camera.update_mats();
 }
@@ -168,4 +169,9 @@ void RenderingServer::flush_visuals2() {
   // spdlog::info("vertex buffer size: {}", vertex_buffer.size());
   sg_draw(0, (int)(vertex_buffer.size() / 4) * 6, 1);
   vertex_buffer.clear();
+}
+
+void RenderingServer::set_camera_resolution(vec2 size) {
+  camera.size = size;
+  camera.update_mats();
 }

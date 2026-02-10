@@ -67,27 +67,16 @@ void Luxlib::init() {
     sprite.texture = load_rgba8_image(sprite.path);
   });
 
-  // world.system().kind(flecs::OnUpdate).run([this](flecs::iter &it) {
-  //   it.world()
-  //       .entity()
-  //       .set<cPosition2>({{rand() % 32, 512.0 + rand() % 32}})
-  //       .set<cScale2>({{1.0, 1.0}})
-  //       .set(cSprite{.size = {16.0, 16.0}, .texture = texture_circle})
-  //       .add<cPhysicsBody>()
-  //       .set(cRestitution{.value = 0.1})
-  //       .set(cDensity{.value = 1.0})
-  //       .set(cFriction{.value = 1.0})
-  //       .set(cPhysicsShape{.type = ShapeType::Circle, .size = {0.5, 0.0}});
-  // });
-
-  world.script_run_file("./assets/game.flecs");
+  // TODO: Be able to adjust window size properly.
 }
 
 void Luxlib::frame() {
 
   // Logic
   float dt = (float)stm_sec(stm_laptime(&last_time));
-  simgui_new_frame({1280, 720, dt, sapp_dpi_scale()});
+
+  auto size = world.get<sWindowSize>();
+  simgui_new_frame({size.width, size.height, dt, sapp_dpi_scale()});
   world.progress(dt);
 
   // Render
@@ -97,7 +86,7 @@ void Luxlib::frame() {
 
   sg_begin_pass({.action = pass, .swapchain = sglue_swapchain()});
 
-  render_server.set_camera_zoon(1.0);
+  render_server.set_camera_zoom(1.0);
   render_server.set_camera_position({0.0, 0.0, -0.1});
   render_server.draw_visuals();
 
@@ -106,4 +95,17 @@ void Luxlib::frame() {
   sg_end_pass();
   sg_commit();
 }
-void Luxlib::input(const sapp_event *event) { simgui_handle_event(event); }
+void Luxlib::input(const sapp_event *event) {
+  simgui_handle_event(event);
+
+  if (event->type == SAPP_EVENTTYPE_KEY_DOWN) {
+    if (event->key_code == SAPP_KEYCODE_ESCAPE) {
+      sapp_request_quit();
+    }
+  }
+
+  if (event->type == SAPP_EVENTTYPE_RESIZED) {
+    world.set(sWindowSize{.width = event->window_width,
+                          .height = event->window_height});
+  }
+}

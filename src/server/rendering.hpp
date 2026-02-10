@@ -43,17 +43,18 @@ struct GpuTexture {
 struct CameraData {
   vec3 position;
   float zoom;
+  vec2 size;
 
   mat4 view;
   mat4 proj;
 
   void update_mats() {
-    vec2 center = vec2{1280.0, 720.0} / 2.0f;
-    view = glm::mat4(1.0);
+    vec2 center = vec2{size.x, size.y} / 2.0f;
+    view = glm::mat4(1.0f);
     view = glm::translate(view, vec3{center.x, center.y, 0.0f});
     view = glm::scale(view, {zoom, zoom, 1.0f});
     view = glm::translate(view, position);
-    proj = glm::ortho(0.0, 1280.0, 0.0, 720.0, -1.0, 1.0);
+    proj = glm::ortho(0.0f, (float)size.x, 0.0f, (float)size.y, -1.0f, 1.0f);
   }
 };
 
@@ -86,9 +87,11 @@ private:
   HandleId get_next_id();
 
 public:
-  void set_camera_zoon(float zoom);
+  void set_camera_zoom(float zoom);
 
   void set_camera_position(vec3 position);
+
+  void set_camera_resolution(vec2 size);
 
   HandleId new_visual2();
 

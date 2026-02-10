@@ -1,8 +1,6 @@
 #pragma once
 
 #include "flecs.h"
-#include "flecs/addons/cpp/mixins/meta/decl.hpp"
-#include "glm/fwd.hpp"
 #include "server/rendering.hpp"
 #include "sokol_app.h"
 #include "sokol_gfx.h"

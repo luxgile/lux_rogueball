@@ -12,6 +12,7 @@ add_files("src/shaders/*.glsl")
 add_packages("flecs", "glm", "stb", "spdlog", "box2d", "imgui")
 add_includedirs("libs/sokol")
 add_includedirs("libs/sokol/util")
+add_cxflags("-H")
 
 if is_plat("linux") then
 	add_syslinks("GL", "dl", "pthread", "X11", "Xi", "Xcursor")
