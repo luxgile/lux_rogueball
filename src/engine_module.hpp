@@ -13,6 +13,8 @@ struct sTime {
 struct sWindowSize {
   int width;
   int height;
+
+  glm::vec2 get_size() const { return glm::vec2{width, height}; }
 };
 
 struct engine_module {

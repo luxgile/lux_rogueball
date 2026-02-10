@@ -40,6 +40,10 @@ struct cRestitution {
   float value;
 };
 
+struct eApplyForce {
+  glm::vec2 force;
+};
+
 enum ShapeType {
   Circle,
   Box,
@@ -53,4 +57,13 @@ struct cPhysicsShape {
 
 struct physics_module {
   physics_module(flecs::world &world);
+
+  static void apply_force(flecs::entity e, const glm::vec2 &force) {
+    e.world()
+        .event<eApplyForce>()
+        .id<cPhysicsBody>()
+        .entity(e)
+        .ctx({.force = force})
+        .emit();
+  }
 };

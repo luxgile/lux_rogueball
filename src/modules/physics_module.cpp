@@ -6,6 +6,7 @@
 #include "glm/ext/vector_float2.hpp"
 #include "glm/trigonometric.hpp"
 #include "transform_module.hpp"
+#include <cstddef>
 
 physics_module::physics_module(flecs::world &world) {
   world.module<physics_module>();
@@ -149,18 +150,11 @@ physics_module::physics_module(flecs::world &world) {
         rotation.value = glm::degrees(b2Rot_GetAngle(pos));
       });
 
-  // Sync physics with ecs position and rotation
-  // world.observer<const cPosition2, const cRotation2, cPhysicsBody>()
-  //     .without<tPhysicsInit>()
-  //     .event(flecs::OnSet)
-  //     .each([](flecs::entity e, const cPosition2 &position,
-  //              const cRotation2 &rotation, cPhysicsBody &body) {
-  //       if (!b2Body_IsValid(body.id)) {
-  //         spdlog::warn("Entity {} has an invalid physics body", e.id());
-  //         return;
-  //       }
-  //
-  //       b2Body_SetTransform(body.id, {position.value.x, position.value.y},
-  //                           b2MakeRot(rotation.value));
-  //     });
+  // Apply force
+  world.observer<cPhysicsBody>().event<eApplyForce>().each(
+      [](flecs::iter &it, size_t, cPhysicsBody &body) {
+        auto force = it.param<eApplyForce>()->force;
+        spdlog::info("Applying force {}, {}", force.x, force.y);
+        b2Body_ApplyForce(body.id, {force.x, force.y}, b2Vec2_zero, true);
+      });
 }

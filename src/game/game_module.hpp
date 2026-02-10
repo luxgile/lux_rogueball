@@ -1,6 +1,15 @@
 #pragma once
 
 #include "flecs.h"
+#include "glm/glm.hpp"
+
+struct cPlayer {};
+
+struct cDragData {
+  glm::vec2 start = {0.0f, 0.0f};
+  glm::vec2 end = {0.0f, 0.0f};
+  bool dragging = false;
+};
 
 struct game_module {
   game_module(flecs::world &world);

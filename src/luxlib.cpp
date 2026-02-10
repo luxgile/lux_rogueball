@@ -114,10 +114,21 @@ void Luxlib::input(const sapp_event *event) {
   auto input = world.try_get_mut<sInputState>();
   if (!input)
     return;
+
+  // Mouse
   if (event->type == SAPP_EVENTTYPE_MOUSE_MOVE) {
     input->mouse_viewport_position = {event->mouse_x, event->mouse_y};
   }
 
+  if (event->type == SAPP_EVENTTYPE_MOUSE_DOWN) {
+    input->pressed_mouse[event->mouse_button] = true;
+  }
+
+  if (event->type == SAPP_EVENTTYPE_MOUSE_UP) {
+    input->pressed_mouse[event->mouse_button] = false;
+  }
+
+  // Keyboard
   if (event->type == SAPP_EVENTTYPE_KEY_DOWN) {
     input->pressed_keys.insert({event->key_code, true});
   }
