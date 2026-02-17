@@ -13,6 +13,13 @@ add_files("src/shaders/*.glsl")
 add_packages("flecs", "glm", "stb", "spdlog", "box2d", "imgui")
 add_includedirs("libs/sokol")
 add_includedirs("libs/sokol/util")
+
+-- Adding sol2 for lua
+add_includedirs("libs/sol2/include")
+add_includedirs("libs/lua-5.4.8/src")
+add_links("lua")
+
+-- To debug includes
 add_cxflags("-H")
 
 if is_plat("linux") then

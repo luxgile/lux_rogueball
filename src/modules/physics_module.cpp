@@ -11,6 +11,8 @@
 physics_module::physics_module(flecs::world &world) {
   world.module<physics_module>();
 
+  world.component<eApplyForce>();
+
   world.component<b2WorldId>().member<uint16_t>("index").member<uint16_t>(
       "generation");
   world.component<sPhysicsWorld>().member<b2WorldId>("id").add(
