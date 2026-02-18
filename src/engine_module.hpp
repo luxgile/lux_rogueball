@@ -1,4 +1,5 @@
 #pragma once
+#include "modules/common_module.hpp"
 #include "modules/input_module.hpp"
 #include "modules/lua_module.hpp"
 #include "modules/physics_module.hpp"
@@ -50,7 +51,8 @@ struct engine_module {
           time.elapsed += time.delta;
         });
 
-    world.import <lua_module>();
+    // world.import <lua_module>();
+    world.import <common_module>();
     world.import <transform_module>();
     world.import <render_module>();
     world.import <physics_module>();

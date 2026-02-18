@@ -1,5 +1,5 @@
 add_rules("mode.debug", "mode.release")
-add_requires("flecs", "glm", "stb", "spdlog", "box2d", "imgui v1.92.5-docking")
+add_requires({ "flecs", configs = { debug = true } }, "glm", "stb", "spdlog", "box2d", "imgui v1.92.5-docking")
 
 target("rogue_ball")
 set_kind("binary")
@@ -20,7 +20,10 @@ add_includedirs("libs/lua-5.4.8/src")
 add_links("lua")
 
 -- To debug includes
-add_cxflags("-H")
+if is_mode("debug") then
+	add_defines("FLECS_DEBUG")
+	add_cxflags("-H")
+end
 
 if is_plat("linux") then
 	add_syslinks("GL", "dl", "pthread", "X11", "Xi", "Xcursor")

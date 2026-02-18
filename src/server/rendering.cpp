@@ -228,3 +228,12 @@ void RenderingServer::draw_circle(vec2 center, float radius, Srgba color,
     draw_line(p1, p2, color);
   }
 }
+auto RenderingServer::get_camera_zoom() const -> float { return camera.zoom; }
+
+auto RenderingServer::get_camera_resolution() const -> vec2 {
+  return camera.size;
+}
+
+auto RenderingServer::get_camera_position() const -> vec3 {
+  return camera.position;
+}

@@ -56,7 +56,7 @@ void Luxlib::init() {
   render_server.init();
 
   // TODO: For some reason this crashes in debug mode
-  // world.import <flecs::stats>();
+  world.import <flecs::stats>();
   world.set<flecs::Rest>({});
   world.import <engine_module>();
   world.import <game_module>();
@@ -67,8 +67,6 @@ void Luxlib::init() {
 
     sprite.texture = load_rgba8_image(sprite.path);
   });
-
-  // TODO: Be able to adjust window size properly.
 }
 
 void Luxlib::frame() {
@@ -87,8 +85,6 @@ void Luxlib::frame() {
 
   sg_begin_pass({.action = pass, .swapchain = sglue_swapchain()});
 
-  render_server.set_camera_zoom(1.0);
-  render_server.set_camera_position({0.0, 0.0, -0.1});
   render_server.draw_visuals();
 
   simgui_render();

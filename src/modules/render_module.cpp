@@ -9,14 +9,9 @@ render_module::render_module(flecs::world &world) {
 
   world.module<render_module>();
 
-  world.component<std::string>()
-      .opaque(flecs::String)
-      .serialize([](const flecs::serializer *s, const std::string *data) {
-        const char *str = data->c_str();
-        return s->value(flecs::String, &str);
-      })
-      .assign_string(
-          [](std::string *data, const char *value) { *data = value; });
+  world.component<cCamera>().member<float>("zoom");
+
+  world.component<cMainCamera>();
 
   world.component<cSprite>()
       .member<std::string>("path")
@@ -56,5 +51,20 @@ render_module::render_module(flecs::world &world) {
         visual.model = xform.model;
         visual.size = sprite.size;
         visual.texture = sprite.texture;
+      });
+
+  world.observer<const cCamera>()
+      .with<cMainCamera>()
+      .event(flecs::OnSet)
+      .each([&render_server](const cCamera &camera) {
+        render_server.set_camera_zoom(camera.zoom);
+      });
+
+  world.system<const cPosition2>("Sync camera position")
+      .with<cCamera>()
+      .with<cMainCamera>()
+      .kind(flecs::PreStore)
+      .each([&render_server](const cPosition2 &pos) {
+        render_server.set_camera_position(glm::vec3(pos.value, 0.0f));
       });
 }

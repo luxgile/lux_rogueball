@@ -16,6 +16,12 @@ struct cVisual2Handle {
   HandleId id;
 };
 
+struct cMainCamera {};
+
+struct cCamera {
+  float zoom = 1.0f;
+};
+
 struct render_module {
   render_module(flecs::world &world);
 };

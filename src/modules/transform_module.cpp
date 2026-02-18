@@ -2,22 +2,11 @@
 #include "glm/ext/vector_float2.hpp"
 #include "glm/glm.hpp"
 #include "glm/trigonometric.hpp"
-#include "lua_module.hpp"
 
 transform_module::transform_module(flecs::world &world) {
   world.module<transform_module>();
 
-  auto &clua = world.get_mut<sLuaState>();
-  world.component<glm::vec2>().member<float>("x").member<float>("y");
-  clua.lua.new_usertype<glm::vec2>("vec2", "x", &glm::vec2::x, "y",
-                                   &glm::vec2::y);
   world.component<cPosition2>().member<glm::vec2>("value");
-  clua.lua.new_usertype<cPosition2>("cPosition2", "value", &cPosition2::value);
-  clua.type_pusher[world.id<cPosition2>()] = [&](void *ptr) {
-    auto comp = (cPosition2 *)ptr;
-    return sol::make_object(clua.lua, comp);
-  };
-
   world.component<cRotation2>().member<float>("value");
   world.component<cScale2>().member<glm::vec2>("value");
 

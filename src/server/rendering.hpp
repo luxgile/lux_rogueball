@@ -103,11 +103,14 @@ private:
   }
 
 public:
-  void set_camera_zoom(float zoom);
+  auto set_camera_zoom(float zoom) -> void;
+  auto get_camera_zoom() const -> float;
 
   void set_camera_position(vec3 position);
+  auto get_camera_position() const -> vec3;
 
   void set_camera_resolution(vec2 size);
+  auto get_camera_resolution() const -> vec2;
 
   HandleId new_visual2();
 

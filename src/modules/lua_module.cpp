@@ -60,9 +60,8 @@ lua_module::lua_module(flecs::world &world) {
         });
   };
 
-  clua.lua.new_usertype<flecs::Identifier>(
-      "flecs.Identifier", "value",
-      [](flecs::Identifier &id) { return std::string(id.value); });
+  clua.lua.new_usertype<flecs::entity>("entity", "name", &flecs::entity::name,
+                                       "id", &flecs::entity::id);
   clua.type_pusher[world.id<flecs::Identifier>()] = [&](void *ptr) {
     auto comp = (flecs::Identifier *)ptr;
     return sol::make_object(clua.lua, comp);
@@ -71,11 +70,12 @@ lua_module::lua_module(flecs::world &world) {
   world.system().kind(flecs::OnStart).run([&clua](flecs::iter &it) {
     clua.lua.script(
         R"(
-				ecs.declare_component('Health', {value = 'int', foo = 'bool'})
-
+				local c = ecs.components
 				ecs.system({
 					name = 'DebugPosition',
-					query = 'transform_module.cPosition2',
+					query = {
+						get = [c.Position2],
+					},
 					each = function(p) 
 						print("My position is: " .. p.value.x .. ", " .. p.value.y)
 					end
