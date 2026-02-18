@@ -53,7 +53,7 @@ struct CameraData {
     view = glm::mat4(1.0f);
     view = glm::translate(view, vec3{center.x, center.y, 0.0f});
     view = glm::scale(view, {zoom, zoom, 1.0f});
-    view = glm::translate(view, position);
+    view = glm::translate(view, {position.x, -position.y, position.z});
     proj = glm::ortho(0.0f, (float)size.x, 0.0f, (float)size.y, -1.0f, 1.0f);
   }
 };
