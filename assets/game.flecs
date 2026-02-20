@@ -48,6 +48,8 @@ player {
 	weapon {
 		cPosition2: {value: {x: 0.0, y: 64.0}}
 		cSprite: {size: {x: 32.0, y: 128.0}, path: "./assets/circle.png"}
+		cPhysicsShape: {type: Box, size: {x: 1.0, y: 4.0}}
+		cSensor: { evaluate_events: true }
 	}
 }
 
@@ -55,5 +57,4 @@ main_camera {
 	cCamera
 	cMainCamera
 	cPosition2: {value: {x: 0.0, y: 0.0}}
-	(rSmoothFollow, player): {smoothness: 0.95}
 }

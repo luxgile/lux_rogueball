@@ -3,15 +3,70 @@
 #include "box2d/id.h"
 #include "box2d/math_functions.h"
 #include "box2d/types.h"
+#include "common_module.hpp"
 #include "glm/ext/vector_float2.hpp"
 #include "glm/trigonometric.hpp"
 #include "transform_module.hpp"
 #include <cstddef>
 
+void init_children_shapes(flecs::entity root, flecs::entity parent,
+                          b2BodyId body_id) {
+  parent.children([&body_id, &root](flecs::entity child) {
+    // Skip entities that already have a body
+    if (child.has<cPhysicsBody>())
+      return;
+
+    auto shape = child.try_get_mut<cPhysicsShape>();
+    if (!shape)
+      return;
+
+    b2ShapeDef shape_def = b2DefaultShapeDef();
+    if (auto density = child.try_get<cDensity>())
+      shape_def.density = density->value;
+
+    if (auto friction = child.try_get<cFriction>())
+      shape_def.material.friction = friction->value;
+
+    if (auto restitution = child.try_get<cRestitution>())
+      shape_def.material.restitution = restitution->value;
+
+    auto sensor = child.try_get<cSensor>();
+    shape_def.isSensor = sensor != nullptr;
+    if (sensor)
+      shape_def.enableSensorEvents = sensor->evaluate_events;
+
+    auto position = glm::vec2(0.0, 0.0);
+    if (auto pos = child.try_get<cPosition2>())
+      position = pos->value;
+
+    switch (shape->type) {
+    case Circle: {
+      b2Circle circle_shape = b2Circle{.center = {position.x, position.y},
+                                       .radius = shape->size.x / 2.0f};
+      shape->id = b2CreateCircleShape(body_id, &shape_def, &circle_shape);
+      break;
+    }
+
+    case Box: {
+      b2Polygon box_shape = b2MakeBox(shape->size.x / 2.0, shape->size.y / 2.0);
+      box_shape.centroid = {position.x, position.y};
+      shape->id = b2CreatePolygonShape(body_id, &shape_def, &box_shape);
+      break;
+    }
+    }
+
+    child.add<rPhysicsRoot>(root);
+
+    init_children_shapes(root, child, body_id);
+  });
+}
+
 physics_module::physics_module(flecs::world &world) {
   world.module<physics_module>();
 
   world.component<eApplyForce>();
+  world.component<eTouchBegin>();
+  world.component<eTouchEnd>();
 
   world.component<b2WorldId>().member<uint16_t>("index").member<uint16_t>(
       "generation");
@@ -65,6 +120,7 @@ physics_module::physics_module(flecs::world &world) {
       .member<b2ShapeId>("id")
       .member<ShapeType>("type")
       .member<glm::vec2>("size");
+  world.component<cSensor>().member<bool>("evaluate_events");
 
   world
       .system<const sPhysicsWorld, cPhysicsBody, const cFriction,
@@ -78,6 +134,7 @@ physics_module::physics_module(flecs::world &world) {
                const cPhysicsBodyType &body_type, cPhysicsShape &shape,
                cPosition2 *pos, cRotation2 *rot) {
         b2BodyDef body_def = b2DefaultBodyDef();
+        body_def.userData = &e;
         switch (body_type) {
         case Dynamic:
           body_def.type = b2_dynamicBody;
@@ -102,6 +159,11 @@ physics_module::physics_module(flecs::world &world) {
         shape_def.material.friction = friction.value;
         shape_def.material.restitution = restitution.value;
 
+        auto sensor = e.try_get<cSensor>();
+        shape_def.isSensor = sensor != nullptr;
+        if (sensor)
+          shape_def.enableSensorEvents = sensor->evaluate_events;
+
         switch (shape.type) {
         case Circle: {
           b2Circle circle_shape =
@@ -118,6 +180,8 @@ physics_module::physics_module(flecs::world &world) {
         }
         }
 
+        init_children_shapes(e, e, body.id);
+
         e.remove<tPhysicsInit>();
       });
 
@@ -130,10 +194,34 @@ physics_module::physics_module(flecs::world &world) {
   world.system<const sPhysicsWorld>("Physics Update")
       .kind(flecs::PreUpdate)
       .each([](const sPhysicsWorld &world) {
+        // Iterate physics
         b2World_Step(world.id, 0.016f, 4);
+
+        // Trigger sensor events
+        auto sensor_events = b2World_GetSensorEvents(world.id);
+        for (int i = 0; i < sensor_events.beginCount; ++i) {
+          auto begin_event = sensor_events.beginEvents + i;
+          flecs::entity *entity =
+              (flecs::entity *)b2Shape_GetUserData(begin_event->sensorShapeId);
+          if (entity && entity->is_valid()) {
+            emit_event<eTouchBegin, cPhysicsBody>(*entity,
+                                                  {.event = begin_event});
+            spdlog::info("Sensor event");
+          }
+        }
+
+        for (int i = 0; i < sensor_events.endCount; ++i) {
+          auto end_event = sensor_events.endEvents + i;
+          flecs::entity *entity =
+              (flecs::entity *)b2Shape_GetUserData(end_event->sensorShapeId);
+          if (entity && entity->is_valid()) {
+            emit_event<eTouchEnd, cPhysicsBody>(*entity, {.event = end_event});
+          }
+        }
       });
 
   // Sync position and rotation from physics
+  // TODO: Use body events instead for better performance
   world
       .system<const sPhysicsWorld, const cPhysicsBody, cPosition2>(
           "Sync Position to Physics")

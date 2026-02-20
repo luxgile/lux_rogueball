@@ -30,6 +30,8 @@ game_module::game_module(flecs::world &world) {
       .member<float>("smoothness")
       .add(flecs::Relationship);
 
+  world.component<eApplyForce>();
+
   world
       .system<sInputState, const sWindowSize, cPosition2, cDragData>(
           "Grab and push player")
@@ -91,6 +93,12 @@ game_module::game_module(flecs::world &world) {
         auto target_pos = target_entity.get<cPosition2>().value;
         pos.value = glm::mix(target_pos, pos.value, smooth.smoothness);
         ImGui::Text("Target: %f, %f", target_pos.x, target_pos.y);
+      });
+
+  world.observer<cHealth>().event<eDealDamage>().each(
+      [](flecs::iter &it, size_t, cHealth health) {
+        auto &info = it.param<eDealDamage>()->info;
+        health.value -= info.damage;
       });
 
   world.script_run_file("./assets/game.flecs");

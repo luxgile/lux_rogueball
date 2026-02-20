@@ -55,6 +55,20 @@ struct cPhysicsShape {
   glm::vec2 size; // If it's a circle, only X is used.
 };
 
+struct cSensor {
+  bool evaluate_events;
+};
+
+struct rPhysicsRoot {};
+
+struct eTouchBegin {
+  b2SensorBeginTouchEvent *event;
+};
+
+struct eTouchEnd {
+  b2SensorEndTouchEvent *event;
+};
+
 struct physics_module {
   physics_module(flecs::world &world);
 

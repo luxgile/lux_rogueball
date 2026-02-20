@@ -16,6 +16,19 @@ struct cDragData {
   bool dragging = false;
 };
 
+struct DamageInfo {
+  flecs::entity dealer;
+  int damage;
+};
+
+struct eDealDamage {
+  DamageInfo info;
+};
+
+struct cHealth {
+  int value;
+};
+
 struct game_module {
   game_module(flecs::world &world);
 };
