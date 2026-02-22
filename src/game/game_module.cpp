@@ -57,7 +57,7 @@ game_module::game_module(flecs::world &world) {
             drag.dragging = false;
 
             auto force = drag.start - drag.end;
-            physics_module::apply_force(e, force);
+            physics_module::apply_force(e, force * 10.0f);
           }
         }
       });
@@ -71,7 +71,7 @@ game_module::game_module(flecs::world &world) {
   world.system<cPhysicsBody>("Clamp characters speed")
       .with<cCharacter>()
       .each([](cPhysicsBody &body) {
-        const auto SPEED_LIMIT = 40.0f;
+        const auto SPEED_LIMIT = 250.0f;
         auto b2velocity = b2Body_GetLinearVelocity(body.id);
         auto velocity = glm::vec2{b2velocity.x, b2velocity.y};
         auto speed = glm::length(velocity);

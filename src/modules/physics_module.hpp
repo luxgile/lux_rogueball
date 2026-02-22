@@ -12,10 +12,14 @@
 #include "spdlog/spdlog.h"
 #include "transform_module.hpp"
 
-struct tPhysicsInit {};
+struct cPhysicsInit {};
 struct sPhysicsWorld {
   float pixel_to_meters;
   b2WorldId id;
+};
+
+struct sPhysicsDebugDraw {
+  b2DebugDraw debug;
 };
 
 enum cPhysicsBodyType {

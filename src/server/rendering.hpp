@@ -26,6 +26,13 @@ struct Srgba {
   float g;
   float b;
   float a;
+
+  static auto from_hex(uint32_t hex) -> Srgba {
+    return {.r = ((hex >> 16) & 0xFF) / 255.0f,
+            .g = ((hex >> 8) & 0xFF) / 255.0f,
+            .b = (hex & 0xFF) / 255.0f,
+            .a = 1.0f};
+  }
 };
 static const Srgba WHITE = {1.0, 1.0, 1.0, 1.0};
 
@@ -112,6 +119,11 @@ public:
   void set_camera_resolution(vec2 size);
   auto get_camera_resolution() const -> vec2;
 
+  auto screen_to_world(glm::vec2 viewport_pos) -> glm::vec2 {
+    auto world = viewport_pos - camera.size / 2.0f;
+    return glm::vec2{world.x, world.y};
+  }
+
   HandleId new_visual2();
 
   Visual2 &get_visual2(const HandleId &id);
@@ -127,6 +139,8 @@ public:
   void flush_visuals2();
   void draw_line(vec2 p1, vec2 p2, Srgba color, float thickness = 1.0f);
   void draw_point(vec2 p, Srgba color, float size = 1.0f);
-  void draw_rect(vec2 p, vec2 size, Srgba color, bool filled = false);
+  void draw_rect(vec2 p, float r, vec2 size, Srgba color, bool filled = false);
+  auto draw_quad(vec2 p1, vec2 p2, vec2 p3, vec2 p4, vec2 position,
+                 float rotation, Srgba color, bool filled = false) -> void;
   void draw_circle(vec2 center, float radius, Srgba color, int segments = 32);
 };

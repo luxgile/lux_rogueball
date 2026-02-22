@@ -191,29 +191,35 @@ void RenderingServer::draw_line(vec2 p1, vec2 p2, Srgba color,
 }
 
 void RenderingServer::draw_point(vec2 p, Srgba color, float size) {
-  draw_rect(p, vec2(size, size), color, true);
+  draw_rect(p, 0.0f, vec2(size, size), color, true);
 }
 
-void RenderingServer::draw_rect(vec2 p, vec2 size, Srgba color, bool filled) {
+void RenderingServer::draw_rect(vec2 p, float r, vec2 size, Srgba color,
+                                bool filled) {
+  vec2 half_size = size * 0.5f;
+
+  // Corner offsets before rotation
+  vec2 corners[4] = {
+      vec2(-half_size.x, -half_size.y),
+      vec2(half_size.x, -half_size.y),
+      vec2(half_size.x, half_size.y),
+      vec2(-half_size.x, half_size.y),
+  };
+
+  // Rotate and translate each corner
+  float c = cos(r);
+  float s = sin(r);
+  for (vec2 &v : corners) {
+    v = p + vec2(c * v.x - s * v.y, s * v.x + c * v.y);
+  }
+
   if (filled) {
-    vec2 half_size = size * 0.5f;
-    vec2 v0 = p + vec2(-half_size.x, -half_size.y);
-    vec2 v1 = p + vec2(half_size.x, -half_size.y);
-    vec2 v2 = p + vec2(half_size.x, half_size.y);
-    vec2 v3 = p + vec2(-half_size.x, half_size.y);
-
-    push_quad(v0, v1, v2, v3, color, nullptr);
+    push_quad(corners[0], corners[1], corners[2], corners[3], color, nullptr);
   } else {
-    vec2 half_size = size * 0.5f;
-    vec2 p1 = p + vec2(-half_size.x, -half_size.y);
-    vec2 p2 = p + vec2(half_size.x, -half_size.y);
-    vec2 p3 = p + vec2(half_size.x, half_size.y);
-    vec2 p4 = p + vec2(-half_size.x, half_size.y);
-
-    draw_line(p1, p2, color);
-    draw_line(p2, p3, color);
-    draw_line(p3, p4, color);
-    draw_line(p4, p1, color);
+    draw_line(corners[0], corners[1], color);
+    draw_line(corners[1], corners[2], color);
+    draw_line(corners[2], corners[3], color);
+    draw_line(corners[3], corners[0], color);
   }
 }
 
@@ -236,4 +242,23 @@ auto RenderingServer::get_camera_resolution() const -> vec2 {
 
 auto RenderingServer::get_camera_position() const -> vec3 {
   return camera.position;
+}
+auto RenderingServer::draw_quad(vec2 p1, vec2 p2, vec2 p3, vec2 p4,
+                                vec2 position, float rotation, Srgba color,
+                                bool filled) -> void {
+  float c = cos(rotation);
+  float s = sin(rotation);
+  p1 = position + vec2(c * p1.x - s * p1.y, s * p1.x + c * p1.y);
+  p2 = position + vec2(c * p2.x - s * p2.y, s * p2.x + c * p2.y);
+  p3 = position + vec2(c * p3.x - s * p3.y, s * p3.x + c * p3.y);
+  p4 = position + vec2(c * p4.x - s * p4.y, s * p4.x + c * p4.y);
+
+  if (filled) {
+    push_quad(p1, p2, p3, p4, color, &white_texture);
+  } else {
+    draw_line(p1, p2, color);
+    draw_line(p2, p3, color);
+    draw_line(p3, p4, color);
+    draw_line(p4, p1, color);
+  }
 }

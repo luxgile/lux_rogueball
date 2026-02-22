@@ -56,7 +56,7 @@ void Luxlib::init() {
   render_server.init();
 
   // TODO: For some reason this crashes in debug mode
-  world.import <flecs::stats>();
+  // world.import <flecs::stats>();
   world.set<flecs::Rest>({});
   world.import <engine_module>();
   world.import <game_module>();

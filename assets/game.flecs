@@ -7,11 +7,11 @@ prefab Floor {
 	cPosition2: {value: {x: 0.0, y: 0.0}}
 	cRotation2: {value: 0.0}
 	cScale2: {value: {x: 1.0, y: 1.0}}
-	cSprite: {size: {x: 2000.0, y: 32.0}, path: "./assets/placeholder.png"}
+	// cSprite: {size: {x: 2000.0, y: 32.0}, path: "./assets/placeholder.png"}
 	cPhysicsBody
 	cDensity: {value: 1.0}
-	cPhysicsBodyType: { Static }
-	cPhysicsShape: {type: Box, size: {x: 100.0, y: 1.0}}
+	cPhysicsBodyType: { Kinematic }
+	cPhysicsShape: {type: Box, size: {x: 1000.0, y: 16.0}}
 }
 
 a : Floor {
@@ -37,19 +37,19 @@ c : Floor {
 player {
 	cPlayer
 	cDragData
-	cPosition2: {value: {x: 0.0, y: 128.0}}
-	cSprite: {size: {x: 64.0, y: 64.0}, path: "./assets/circle.png"}
+	cPosition2: {value: {x: 0.0, y: 16.0}}
+	// cSprite: {size: {x: 64.0, y: 64.0}, path: "./assets/circle.png"}
 	cPhysicsBody
 	cPhysicsBodyType: { Dynamic }
 	cDensity: {value: 1.0}
-	cRestitution: {value: 1.0 }
-	cPhysicsShape: {type: Circle, size: {x: 0.5, y: 0.0}}
+	cRestitution: {value: 0.2 }
+	cPhysicsShape: {type: Circle, size: {x: 32.0, y: 0.0}}
 
 	weapon {
 		cPosition2: {value: {x: 0.0, y: 64.0}}
-		cSprite: {size: {x: 32.0, y: 128.0}, path: "./assets/circle.png"}
-		cPhysicsShape: {type: Box, size: {x: 1.0, y: 4.0}}
-		cSensor: { evaluate_events: true }
+		// cSprite: {size: {x: 32.0, y: 128.0}, path: "./assets/circle.png"}
+		cPhysicsShape: {type: Box, size: {x: 16.0, y: 64.0}}
+		// cSensor: { evaluate_events: true }
 	}
 }
 
