@@ -9,8 +9,10 @@
 #include "glm/ext/vector_float2.hpp"
 #include "glm/gtc/quaternion.hpp"
 #include "glm/trigonometric.hpp"
+#include "sokol_time.h"
 #include "transform_module.hpp"
 #include <cstddef>
+#include <ranges>
 
 void draw_physics_solid_circles(b2Transform xform, float radius,
                                 b2HexColor color, void *context) {
@@ -123,6 +125,12 @@ physics_module::physics_module(flecs::world &world) {
       "generation");
   world.component<sPhysicsWorld>().member<b2WorldId>("id").add(
       flecs::Singleton);
+
+  world.component<sPhysicsTime>()
+      .member<uint64_t>("last_time")
+      .member<float>("fixed_dt")
+      .add(flecs::Singleton);
+  world.add<sPhysicsTime>();
 
   world.component<b2DebugDraw>()
       .member<bool>("drawShapes")
@@ -256,11 +264,17 @@ physics_module::physics_module(flecs::world &world) {
           [](flecs::entity e, cPhysicsBody &body) { b2DestroyBody(body.id); });
 
   // Process
-  world.system<const sPhysicsWorld>("Physics Update")
+  world.system<const sPhysicsWorld, sPhysicsTime>("Physics Update")
       .kind(flecs::PreUpdate)
-      .each([](flecs::iter &it, size_t, const sPhysicsWorld &world) {
+      .each([](flecs::iter &it, size_t, const sPhysicsWorld &world,
+               sPhysicsTime &time) {
         // Iterate physics
-        b2World_Step(world.id, 0.016f, 4);
+        auto elapsed = stm_sec(stm_laptime(&time.last_time));
+        auto iterations = elapsed / time.fixed_dt;
+        for (int i = 0; i < iterations; ++i) {
+          b2World_Step(world.id, time.fixed_dt, 4);
+        }
+        time.last_time = stm_now();
 
         // Trigger sensor events
         auto sensor_events = b2World_GetSensorEvents(world.id);

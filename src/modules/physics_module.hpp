@@ -13,7 +13,8 @@
 #include "transform_module.hpp"
 
 struct sPhysicsTime {
-  float fixed_dt;
+  uint64_t last_time = 0;
+  float fixed_dt = 0.016f;
 };
 
 struct cPhysicsInit {};
