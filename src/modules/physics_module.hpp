@@ -59,9 +59,8 @@ struct cPhysicsShape {
   glm::vec2 size; // If it's a circle, only X is used.
 };
 
-struct cSensor {
-  bool evaluate_events;
-};
+struct cSensor {};
+struct cSensorEvents {};
 
 struct rPhysicsRoot {};
 

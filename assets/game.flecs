@@ -10,8 +10,9 @@ prefab Floor {
 	// cSprite: {size: {x: 2000.0, y: 32.0}, path: "./assets/placeholder.png"}
 	cPhysicsBody
 	cDensity: {value: 1.0}
-	cPhysicsBodyType: { Kinematic }
+	cPhysicsBodyType: { Static }
 	cPhysicsShape: {type: Box, size: {x: 1000.0, y: 16.0}}
+	cSensorEvents
 }
 
 a : Floor {
@@ -49,7 +50,7 @@ player {
 		cPosition2: {value: {x: 0.0, y: 64.0}}
 		// cSprite: {size: {x: 32.0, y: 128.0}, path: "./assets/circle.png"}
 		cPhysicsShape: {type: Box, size: {x: 16.0, y: 64.0}}
-		// cSensor: { evaluate_events: true }
+		cSensor
 	}
 }
 

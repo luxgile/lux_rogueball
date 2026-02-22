@@ -72,6 +72,7 @@ void init_entity_physics_shape(const sPhysicsWorld &pworld, flecs::entity root,
     return;
 
   b2ShapeDef shape_def = b2DefaultShapeDef();
+  shape_def.userData = (void *)e.id();
   if (auto density = e.try_get<cDensity>())
     shape_def.density = density->value;
 
@@ -81,10 +82,8 @@ void init_entity_physics_shape(const sPhysicsWorld &pworld, flecs::entity root,
   if (auto restitution = e.try_get<cRestitution>())
     shape_def.material.restitution = restitution->value;
 
-  auto sensor = e.try_get<cSensor>();
-  shape_def.isSensor = sensor != nullptr;
-  if (sensor)
-    shape_def.enableSensorEvents = sensor->evaluate_events;
+  shape_def.isSensor = e.has<cSensor>();
+  shape_def.enableSensorEvents = shape_def.isSensor || e.has<cSensorEvents>();
 
   auto center = b2Vec2_zero;
   if (e != root) {
@@ -202,7 +201,8 @@ physics_module::physics_module(flecs::world &world) {
       .member<b2ShapeId>("id")
       .member<ShapeType>("type")
       .member<glm::vec2>("size");
-  world.component<cSensor>().member<bool>("evaluate_events");
+  world.component<cSensor>();
+  world.component<cSensorEvents>();
 
   world
       .system<const sPhysicsWorld, cPhysicsBody, const cFriction,
@@ -253,7 +253,7 @@ physics_module::physics_module(flecs::world &world) {
   // Process
   world.system<const sPhysicsWorld>("Physics Update")
       .kind(flecs::PreUpdate)
-      .each([](const sPhysicsWorld &world) {
+      .each([](flecs::iter &it, size_t, const sPhysicsWorld &world) {
         // Iterate physics
         b2World_Step(world.id, 0.016f, 4);
 
@@ -263,21 +263,24 @@ physics_module::physics_module(flecs::world &world) {
         //              sensor_events.endCount);
         for (int i = 0; i < sensor_events.beginCount; ++i) {
           auto begin_event = sensor_events.beginEvents + i;
-          flecs::entity *entity =
-              (flecs::entity *)b2Shape_GetUserData(begin_event->sensorShapeId);
-          if (entity && entity->is_valid()) {
-            emit_event<eTouchBegin, cPhysicsBody>(*entity,
+          auto entity_id =
+              (flecs::entity_t)b2Shape_GetUserData(begin_event->visitorShapeId);
+          auto entity = it.world().get_alive(entity_id);
+          if (entity && entity.is_valid()) {
+            spdlog::info("Sensor start with {}", entity.name().c_str());
+            emit_event<eTouchBegin, cPhysicsBody>(entity,
                                                   {.event = begin_event});
-            spdlog::info("Sensor event");
           }
         }
 
         for (int i = 0; i < sensor_events.endCount; ++i) {
           auto end_event = sensor_events.endEvents + i;
-          flecs::entity *entity =
-              (flecs::entity *)b2Shape_GetUserData(end_event->sensorShapeId);
-          if (entity && entity->is_valid()) {
-            emit_event<eTouchEnd, cPhysicsBody>(*entity, {.event = end_event});
+          auto entity_id =
+              (flecs::entity_t)b2Shape_GetUserData(end_event->visitorShapeId);
+          auto entity = it.world().get_alive(entity_id);
+          if (entity && entity.is_valid()) {
+            spdlog::info("Sensor end with {}", entity.name().c_str());
+            emit_event<eTouchEnd, cPhysicsBody>(entity, {.event = end_event});
           }
         }
       });
