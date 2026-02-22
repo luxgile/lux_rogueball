@@ -10,6 +10,7 @@
 #include "glm/trigonometric.hpp"
 #include "imgui.h"
 #include <map>
+#include <random>
 
 glm::vec2 viewport_to_world(glm::vec2 viewport_pos, glm::vec2 size) {
   auto world = viewport_pos - size / 2.0f;
@@ -21,11 +22,13 @@ game_module::game_module(flecs::world &world) {
 
   world.component<cCharacter>();
   world.component<cPlayer>().is_a<cCharacter>();
+  world.component<cEnemy>().is_a<cCharacter>();
   world.component<cDragData>()
       .member<glm::vec2>("start")
       .member<glm::vec2>("end")
       .member<bool>("dragging");
 
+  world.component<cConstRotation>().member<float>("degrees");
   world.component<cHealth>().member<int>("value");
   world.component<cWeapon>().member<int>("damage");
 
@@ -65,10 +68,9 @@ game_module::game_module(flecs::world &world) {
         }
       });
 
-  world.system<cPhysicsBody>("Rotate characters")
-      .with<cCharacter>()
-      .each([](cPhysicsBody &body) {
-        b2Body_SetAngularVelocity(body.id, glm::radians(90.0));
+  world.system<const cPhysicsBody, const cConstRotation>("Constant rotation")
+      .each([](const cPhysicsBody &body, const cConstRotation &rotation) {
+        b2Body_SetAngularVelocity(body.id, glm::radians(rotation.degrees));
       });
 
   world.system<cPhysicsBody>("Clamp characters speed")
@@ -106,18 +108,45 @@ game_module::game_module(flecs::world &world) {
         }
       });
 
+  // Damage system
   world.observer<cSensor>().event<eTouchBegin>().each(
       [](flecs::iter &it, size_t i, cSensor sensor) {
         auto collision = it.param<eTouchBegin>();
         if (auto weapon = collision->sensor.try_get<cWeapon>()) {
+          // Deal the damage
           if (auto target_health = collision->visitor.try_get<cHealth>()) {
             emit_event<eDealDamage, cHealth>(
                 collision->visitor,
                 eDealDamage{.info = {.dealer = collision->sensor,
                                      .damage = weapon->damage}});
           }
+
+          // Invert root rotation
+          auto root = collision->sensor.target<rPhysicsRoot>();
+          if (root.is_valid()) {
+            if (auto rotation = root.try_get_mut<cConstRotation>()) {
+              rotation->degrees = -rotation->degrees;
+            }
+          }
         }
       });
+
+  world.system("Enemy spawner").interval(3.0f).run([](flecs::iter &it) {
+    auto world = it.world();
+    auto rng = std::mt19937(std::random_device()());
+    auto dist = std::uniform_real_distribution<float>(-128.0f, 128.0f);
+    auto entity = world.entity();
+    entity.add<cEnemy>();
+    entity.set(cPosition2{glm::vec2{dist(rng), dist(rng)}});
+    entity.set(cHealth{3});
+    entity.add<cSensorEvents>();
+    entity.add<cPhysicsBody>();
+    entity.set(cPhysicsBodyType::Dynamic);
+    entity.set(cDensity{1.0f});
+    entity.set(cFriction{0.0f});
+    entity.set(cRestitution{1.0f});
+    entity.set(cPhysicsShape{.type = ShapeType::Circle, .size = {24.0f, 0.0f}});
+  });
 
   world.script_run_file("./assets/game.flecs");
 }

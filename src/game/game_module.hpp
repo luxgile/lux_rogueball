@@ -3,8 +3,12 @@
 #include "flecs.h"
 #include "glm/glm.hpp"
 
+struct cConstRotation {
+  float degrees;
+};
 struct cCharacter {};
 struct cPlayer {};
+struct cEnemy {};
 
 struct rSmoothFollow {
   float smoothness;

@@ -12,6 +12,10 @@
 #include "spdlog/spdlog.h"
 #include "transform_module.hpp"
 
+struct sPhysicsTime {
+  float fixed_dt;
+};
+
 struct cPhysicsInit {};
 struct sPhysicsWorld {
   float pixel_to_meters;

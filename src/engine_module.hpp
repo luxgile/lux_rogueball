@@ -9,7 +9,10 @@
 
 struct sTime {
   float elapsed;
+  float real_elapsed;
   float delta;
+  float real_delta;
+  float scale = 1.0f;
 };
 
 struct sWindowSize {
@@ -40,6 +43,8 @@ struct engine_module {
     world.component<sTime>()
         .member<float>("elapsed")
         .member<float>("delta")
+        .member<float>("scale")
+        .member<float>("real_elapsed")
         .add(flecs::Singleton);
 
     world.add<sTime>();
@@ -47,11 +52,14 @@ struct engine_module {
     world.system<sTime>("Update Time")
         .kind(flecs::OnStore)
         .each([](flecs::iter &it, size_t, sTime &time) {
-          time.delta = it.delta_time();
+          auto real_dt = it.delta_time();
+          time.delta = real_dt * time.scale;
+          time.real_delta = real_dt;
+
           time.elapsed += time.delta;
+          time.real_elapsed += time.real_elapsed;
         });
 
-    // world.import <lua_module>();
     world.import <common_module>();
     world.import <transform_module>();
     world.import <render_module>();
