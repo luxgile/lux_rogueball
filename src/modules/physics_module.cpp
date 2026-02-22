@@ -118,8 +118,6 @@ physics_module::physics_module(flecs::world &world) {
   world.module<physics_module>();
 
   world.component<eApplyForce>();
-  world.component<eTouchBegin>();
-  world.component<eTouchEnd>();
 
   world.component<b2WorldId>().member<uint16_t>("index").member<uint16_t>(
       "generation");
@@ -142,6 +140,13 @@ physics_module::physics_module(flecs::world &world) {
       .member<bool>("drawIslands");
   world.component<sPhysicsDebugDraw>().member<b2DebugDraw>("debug").add(
       flecs::Singleton);
+
+  world.component<eTouchBegin>()
+      .member<flecs::entity>("sensor")
+      .member<flecs::entity>("visitor");
+  world.component<eTouchEnd>()
+      .member<flecs::entity>("sensor")
+      .member<flecs::entity>("visitor");
 
   // World management
   world.observer<sPhysicsWorld>()
@@ -259,28 +264,31 @@ physics_module::physics_module(flecs::world &world) {
 
         // Trigger sensor events
         auto sensor_events = b2World_GetSensorEvents(world.id);
-        // spdlog::info("Sensor events: {} + {}", sensor_events.beginCount,
-        //              sensor_events.endCount);
         for (int i = 0; i < sensor_events.beginCount; ++i) {
           auto begin_event = sensor_events.beginEvents + i;
-          auto entity_id =
+          auto visitor_id =
               (flecs::entity_t)b2Shape_GetUserData(begin_event->visitorShapeId);
-          auto entity = it.world().get_alive(entity_id);
-          if (entity && entity.is_valid()) {
-            spdlog::info("Sensor start with {}", entity.name().c_str());
-            emit_event<eTouchBegin, cPhysicsBody>(entity,
-                                                  {.event = begin_event});
+          auto visitor = it.world().get_alive(visitor_id);
+          auto sensor_id =
+              (flecs::entity_t)b2Shape_GetUserData(begin_event->sensorShapeId);
+          auto sensor = it.world().get_alive(sensor_id);
+          if (visitor && visitor.is_valid() && sensor && sensor.is_valid()) {
+            emit_event<eTouchBegin, cSensor>(
+                sensor, {.sensor = sensor, .visitor = visitor});
           }
         }
 
         for (int i = 0; i < sensor_events.endCount; ++i) {
           auto end_event = sensor_events.endEvents + i;
-          auto entity_id =
+          auto visitor_id =
               (flecs::entity_t)b2Shape_GetUserData(end_event->visitorShapeId);
-          auto entity = it.world().get_alive(entity_id);
-          if (entity && entity.is_valid()) {
-            spdlog::info("Sensor end with {}", entity.name().c_str());
-            emit_event<eTouchEnd, cPhysicsBody>(entity, {.event = end_event});
+          auto visitor = it.world().get_alive(visitor_id);
+          auto sensor_id =
+              (flecs::entity_t)b2Shape_GetUserData(end_event->sensorShapeId);
+          auto sensor = it.world().get_alive(sensor_id);
+          if (visitor && visitor.is_valid() && sensor && sensor.is_valid()) {
+            emit_event<eTouchEnd, cSensor>(
+                visitor, {.sensor = sensor, .visitor = visitor});
           }
         }
       });

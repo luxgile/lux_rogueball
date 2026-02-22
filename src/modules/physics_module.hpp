@@ -65,11 +65,13 @@ struct cSensorEvents {};
 struct rPhysicsRoot {};
 
 struct eTouchBegin {
-  b2SensorBeginTouchEvent *event;
+  flecs::entity sensor;
+  flecs::entity visitor;
 };
 
 struct eTouchEnd {
-  b2SensorEndTouchEvent *event;
+  flecs::entity sensor;
+  flecs::entity visitor;
 };
 
 struct physics_module {

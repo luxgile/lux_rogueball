@@ -21,6 +21,10 @@ struct DamageInfo {
   int damage;
 };
 
+struct cWeapon {
+  int damage;
+};
+
 struct eDealDamage {
   DamageInfo info;
 };
