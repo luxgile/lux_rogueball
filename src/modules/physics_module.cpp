@@ -38,12 +38,31 @@ void draw_physics_solid_polygon(b2Transform xform, const b2Vec2 *vertices,
   rendering.draw_quad(v0, v1, v2, v3,
                       glm::vec2{xform.p.x, xform.p.y} * pworld.pixel_to_meters,
                       b2Rot_GetAngle(xform.q), Srgba::from_hex(color));
-  // auto size = (v2 - v0);
-  // auto center = (v0 + v1 + v2 + v3) / 4.0f;
-  // auto pos = glm::vec2{xform.p.x, xform.p.y} * pworld.pixel_to_meters;
-  // auto rot = b2Rot_GetAngle(xform.q);
-  // rendering.draw_rect(pos, rot, size, Srgba::from_hex(color), false);
-  // rendering.draw_point(pos - center, Srgba::from_hex(color), 4.0f);
+}
+
+void draw_physics_point(b2Vec2 position, float size, b2HexColor color,
+                        void *context) {
+  auto &rendering = Luxlib::instance().render_server;
+  auto &pworld = Luxlib::instance().world.get<sPhysicsWorld>();
+  auto pos = glm::vec2{position.x, position.y} * pworld.pixel_to_meters;
+  rendering.draw_point(pos, Srgba::from_hex(color),
+                       size * pworld.pixel_to_meters);
+}
+
+void draw_physics_transform(const b2Transform xform, void *context) {
+  auto &rendering = Luxlib::instance().render_server;
+  auto &pworld = Luxlib::instance().world.get<sPhysicsWorld>();
+  auto pos = glm::vec2{xform.p.x, xform.p.y} * pworld.pixel_to_meters;
+  rendering.draw_point(pos, Srgba::from_hex(0xFF0000FF), 1.0f);
+}
+
+void draw_physics_segment(b2Vec2 p1, b2Vec2 p2, b2HexColor color,
+                          void *context) {
+  auto &rendering = Luxlib::instance().render_server;
+  auto &pworld = Luxlib::instance().world.get<sPhysicsWorld>();
+  auto wp1 = glm::vec2{p1.x, p1.y} * pworld.pixel_to_meters;
+  auto wp2 = glm::vec2{p2.x, p2.y} * pworld.pixel_to_meters;
+  rendering.draw_line(wp1, wp2, Srgba::from_hex(color));
 }
 
 void init_entity_physics_shape(const sPhysicsWorld &pworld, flecs::entity root,
@@ -143,9 +162,13 @@ physics_module::physics_module(flecs::world &world) {
 
   auto debug_draw = b2DefaultDebugDraw();
   debug_draw.drawShapes = true;
+  debug_draw.drawMass = true;
   debug_draw.useDrawingBounds = false;
   debug_draw.DrawSolidCircleFcn = draw_physics_solid_circles;
   debug_draw.DrawSolidPolygonFcn = draw_physics_solid_polygon;
+  debug_draw.DrawTransformFcn = draw_physics_transform;
+  debug_draw.DrawPointFcn = draw_physics_point;
+  debug_draw.DrawSegmentFcn = draw_physics_segment;
   world.set(sPhysicsDebugDraw{debug_draw});
 
   // Body management
@@ -262,17 +285,6 @@ physics_module::physics_module(flecs::world &world) {
   world.system<const sPhysicsWorld, sPhysicsDebugDraw>("Draw Physics")
       .each([](const sPhysicsWorld &pworld, sPhysicsDebugDraw &draw) {
         auto &rendering = Luxlib::instance().render_server;
-        // auto lower = rendering.screen_to_world({0.0, 0.0});
-        // auto upper =
-        //     rendering.screen_to_world(rendering.get_camera_resolution());
-        // draw.draw.drawingBounds =
-        //     b2AABB{{lower.x, lower.y}, {upper.x, upper.y}};
-        draw.debug.DrawSolidCircleFcn = draw_physics_solid_circles;
-        draw.debug.DrawSolidPolygonFcn = draw_physics_solid_polygon;
-        draw.debug.drawShapes = true;
-        draw.debug.useDrawingBounds = false;
-        draw.debug.drawingBounds =
-            b2AABB{{-1000.0f, -1000.0f}, {1000.0f, 1000.0f}};
         b2World_Draw(pworld.id, &draw.debug);
       });
 
