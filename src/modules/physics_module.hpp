@@ -14,7 +14,9 @@
 
 struct sPhysicsTime {
   uint64_t last_time = 0;
+  float acc = 0;
   float fixed_dt = 0.016f;
+  float scale = 2.5f;
 };
 
 struct cPhysicsInit {};

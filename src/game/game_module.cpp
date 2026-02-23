@@ -1,6 +1,7 @@
 #include "game_module.hpp"
 #include "../engine_module.hpp"
 #include "../luxlib.hpp"
+#include "../modules/common_module.hpp"
 #include "../modules/input_module.hpp"
 #include "../modules/physics_module.hpp"
 #include "box2d/box2d.h"
@@ -37,6 +38,9 @@ game_module::game_module(flecs::world &world) {
       .add(flecs::Relationship);
 
   world.component<eApplyForce>();
+
+  world.component<sHitStop>().member<float>("acc").add(flecs::Singleton);
+  world.add<sHitStop>();
 
   world
       .system<sInputState, const sWindowSize, cPosition2, cDragData>(
@@ -103,6 +107,12 @@ game_module::game_module(flecs::world &world) {
       [](flecs::iter &it, size_t i, cHealth &health) {
         auto &info = it.param<eDealDamage>()->info;
         health.value -= info.damage;
+
+        // Hit stop
+        if (auto stop = it.world().try_get_mut<sHitStop>()) {
+          stop->acc = 0.2f;
+        }
+
         if (health.value <= 0) {
           it.entity(i).destruct();
         }
@@ -127,6 +137,20 @@ game_module::game_module(flecs::world &world) {
             if (auto rotation = root.try_get_mut<cConstRotation>()) {
               rotation->degrees = -rotation->degrees;
             }
+          }
+        }
+      });
+
+  world.system<sHitStop>("Hit stop")
+      .each([](flecs::iter &it, size_t, sHitStop &stop) {
+        if (stop.acc > 0.0f) {
+          it.world().set_time_scale(0.0);
+          it.world().get_mut<sPhysicsTime>().scale = 0.0;
+          stop.acc -= it.delta_time();
+          if (stop.acc < 0.0f) {
+            it.world().set_time_scale(1.0);
+            it.world().get_mut<sPhysicsTime>().scale = 2.5;
+            stop.acc = 0.0f;
           }
         }
       });

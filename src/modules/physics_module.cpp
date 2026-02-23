@@ -5,10 +5,12 @@
 #include "box2d/math_functions.h"
 #include "box2d/types.h"
 #include "common_module.hpp"
+#include "flecs/addons/cpp/iter.hpp"
 #include "glm/ext/quaternion_trigonometric.hpp"
 #include "glm/ext/vector_float2.hpp"
 #include "glm/gtc/quaternion.hpp"
 #include "glm/trigonometric.hpp"
+#include "imgui.h"
 #include "sokol_time.h"
 #include "transform_module.hpp"
 #include <cstddef>
@@ -268,13 +270,20 @@ physics_module::physics_module(flecs::world &world) {
       .kind(flecs::PreUpdate)
       .each([](flecs::iter &it, size_t, const sPhysicsWorld &world,
                sPhysicsTime &time) {
+        ImGui::InputFloat("Physics fixed step", &time.fixed_dt);
+
         // Iterate physics
-        auto elapsed = stm_sec(stm_laptime(&time.last_time));
-        auto iterations = elapsed / time.fixed_dt;
-        for (int i = 0; i < iterations; ++i) {
-          b2World_Step(world.id, time.fixed_dt, 4);
-        }
+        time.acc += stm_sec(stm_since(time.last_time)) * time.scale;
         time.last_time = stm_now();
+        while (time.fixed_dt > 0.0f && time.acc >= time.fixed_dt) {
+          b2World_Step(world.id, time.fixed_dt, 4);
+          time.acc -= time.fixed_dt;
+        }
+
+        ImGui::Text("stm_since raw: %llu", stm_since(time.last_time));
+        ImGui::Text("stm_sec converted: %f",
+                    stm_ms(stm_since(time.last_time)) / 1000.0f);
+        ImGui::Text("acc: %f", time.acc);
 
         // Trigger sensor events
         auto sensor_events = b2World_GetSensorEvents(world.id);

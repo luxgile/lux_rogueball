@@ -3,6 +3,10 @@
 #include "flecs.h"
 #include "glm/glm.hpp"
 
+struct sHitStop {
+  float acc;
+};
+
 struct cConstRotation {
   float degrees;
 };

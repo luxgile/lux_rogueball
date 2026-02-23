@@ -5,6 +5,7 @@
 #include "game/game_module.hpp"
 #include "glm/ext/vector_float2.hpp"
 #include "imgui.h"
+#include "modules/input_module.hpp"
 #include "modules/physics_module.hpp"
 #include "modules/render_module.hpp"
 #include "modules/transform_module.hpp"
