@@ -1,7 +1,12 @@
 using transform_module
 using physics_module
 using render_module
+using base_module
+using combat_module
 using game_module
+using interaction_module
+using mechanics_module
+using spawner_module
 
 prefab Floor {
 	cPosition2: {value: {x: 0.0, y: 0.0}}

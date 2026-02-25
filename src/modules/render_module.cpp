@@ -1,4 +1,5 @@
 #include "render_module.hpp"
+#include "../engine_module.hpp"
 #include "flecs/addons/cpp/c_types.hpp"
 #include "flecs/addons/cpp/component.hpp"
 #include "glm/ext/vector_float2.hpp"
@@ -66,5 +67,11 @@ render_module::render_module(flecs::world &world) {
       .kind(flecs::PreStore)
       .each([&render_server](const cPosition2 &pos) {
         render_server.set_camera_position(glm::vec3(pos.value, 0.0f));
+      });
+
+  world.system<const sWindowSize>("Draw HUD")
+      .kind(flecs::PostUpdate)
+      .each([&render_server](const sWindowSize &window) {
+        render_server.draw_text(10, 30, "ROGUE BALL", 32.0f, WHITE);
       });
 }

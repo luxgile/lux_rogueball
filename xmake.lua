@@ -1,18 +1,20 @@
 add_rules("mode.debug", "mode.release")
-add_requires({ "flecs", configs = { debug = true } }, "glm", "stb", "spdlog", "box2d", "imgui v1.92.5-docking")
+add_requires({ "flecs", configs = { debug = true } }, "glm", "stb", "spdlog", "box2d", "imgui v1.92.5-docking", "miniaudio")
 
 target("rogue_ball")
-set_kind("binary")
-add_rules("sokol.shdc")
+    set_kind("binary")
+    set_pcxxheader("src/pch.hpp")
+    add_rules("sokol.shdc")
 set_languages("cxx20")
 add_files("src/*.cpp")
 add_files("src/server/*.cpp")
 add_files("src/game/*.cpp")
 add_files("src/modules/*.cpp")
 add_files("src/shaders/*.glsl")
-add_packages("flecs", "glm", "stb", "spdlog", "box2d", "imgui")
+add_packages("flecs", "glm", "stb", "spdlog", "box2d", "imgui", "miniaudio")
 add_includedirs("libs/sokol")
 add_includedirs("libs/sokol/util")
+add_includedirs("libs/sokol/tests/ext")
 
 -- Adding sol2 for lua
 add_includedirs("libs/sol2/include")
@@ -22,7 +24,7 @@ add_links("lua")
 -- To debug includes
 if is_mode("debug") then
 	add_defines("FLECS_DEBUG")
-	add_cxflags("-H")
+	-- add_cxflags("-H")
 end
 
 if is_plat("linux") then

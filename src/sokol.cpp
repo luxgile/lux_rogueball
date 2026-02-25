@@ -16,3 +16,16 @@
 #include "sokol_imgui.h"
 #include "sokol_log.h"
 #include "sokol_time.h"
+
+#define SOKOL_GL_IMPL
+#include "sokol_gl.h"
+
+#define FONTSTASH_IMPLEMENTATION
+#if defined(_MSC_VER )
+#pragma warning(disable:4996) // strncpy use in fontstash.h
+#endif
+extern "C" {
+    #include "fontstash.h"
+}
+#define SOKOL_FONTSTASH_IMPL
+#include "sokol_fontstash.h"

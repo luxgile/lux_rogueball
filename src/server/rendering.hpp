@@ -10,6 +10,13 @@
 #include "sokol_log.h"
 #include "spdlog/spdlog.h"
 #include "stb/stb_image.h"
+#include "sokol_gl.h"
+#include "fontstash.h"
+#include "sokol_fontstash.h"
+
+// fontstash.h (sokol version) is missing this declaration in the header section
+extern "C" int fonsAddFontMem(FONScontext* stash, const char* name, unsigned char* data, int dataSize, int freeData);
+
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
@@ -89,6 +96,9 @@ private:
   std::vector<GpuVertex2> vertex_buffer;
   sg_view current_view;
 
+  FONScontext* fons_context;
+  int font_normal;
+
   const int MAX_VERTICES = 10000;
   const int MAX_BATCHES = 20;
 
@@ -143,4 +153,5 @@ public:
   auto draw_quad(vec2 p1, vec2 p2, vec2 p3, vec2 p4, vec2 position,
                  float rotation, Srgba color, bool filled = false) -> void;
   void draw_circle(vec2 center, float radius, Srgba color, int segments = 32);
+  void draw_text(float x, float y, const char* text, float size, Srgba color);
 };

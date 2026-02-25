@@ -100,9 +100,42 @@ void RenderingServer::init() {
   white_texture.image = sg_make_image(&img_desc);
   sg_view_desc view_desc = {.texture = {.image = white_texture.image}};
   white_texture.view = sg_make_view(&view_desc);
+
+  // Initialize sokol-gl
+  sgl_desc_t sgl_desc = {};
+  sgl_setup(&sgl_desc);
+
+  // Initialize sokol-fontstash
+  sfons_desc_t sfons_desc = {};
+  sfons_desc.width = 512;
+  sfons_desc.height = 512;
+  fons_context = sfons_create(&sfons_desc);
+  fonsSetAlign(fons_context, FONS_ALIGN_LEFT | FONS_ALIGN_TOP);
+
+  const char *font_path =
+      "/usr/share/fonts/liberation-sans-fonts/LiberationSans-Regular.ttf";
+  FILE *f = fopen(font_path, "rb");
+  if (f) {
+    fseek(f, 0, SEEK_END);
+    int size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    unsigned char *data = (unsigned char *)malloc(size);
+    fread(data, 1, size, f);
+    fclose(f);
+    font_normal = fonsAddFontMem(fons_context, "sans", data, size, 1);
+  } else {
+    font_normal = FONS_INVALID;
+    spdlog::error("Could not load font: {}", font_path);
+  }
 }
 
 void RenderingServer::draw_visuals() {
+  sgl_defaults();
+  sgl_matrix_mode_projection();
+  // Note: sgl_ortho uses bottom-up Y by default, fontstash expects top-down or
+  // consistent screen space.
+  sgl_ortho(0.0f, camera.size.x, camera.size.y, 0.0f, -1.0f, 1.0f);
+
   std::map<uint32_t, std::vector<HandleId>> batch_map;
   for (auto [id, visual] : visuals) {
     batch_map[visual.texture.view.id].push_back(id);
@@ -115,6 +148,9 @@ void RenderingServer::draw_visuals() {
     }
   }
   flush_visuals2();
+
+  sfons_flush(fons_context);
+  sgl_draw();
 }
 
 void RenderingServer::queue_visual2(Visual2 visual) {
@@ -234,6 +270,20 @@ void RenderingServer::draw_circle(vec2 center, float radius, Srgba color,
     draw_line(p1, p2, color);
   }
 }
+void RenderingServer::draw_text(float x, float y, const char *text, float size,
+                                Srgba color) {
+  if (font_normal == FONS_INVALID)
+    return;
+
+  fonsClearState(fons_context);
+  fonsSetFont(fons_context, font_normal);
+  fonsSetSize(fons_context, size);
+  fonsSetColor(fons_context,
+               sfons_rgba((uint8_t)(color.r * 255), (uint8_t)(color.g * 255),
+                          (uint8_t)(color.b * 255), (uint8_t)(color.a * 255)));
+  fonsDrawText(fons_context, x, y, text, NULL);
+}
+
 auto RenderingServer::get_camera_zoom() const -> float { return camera.zoom; }
 
 auto RenderingServer::get_camera_resolution() const -> vec2 {
