@@ -1,8 +1,7 @@
 #include "combat_module.hpp"
 #include "../modules/common_module.hpp"
 #include "../modules/physics_module.hpp"
-#include "base_module.hpp"
-#include "mechanics_module.hpp"
+#include "game_module.hpp"
 
 combat_module::combat_module(flecs::world &world) {
   world.module<combat_module>();

@@ -1,10 +1,18 @@
 add_rules("mode.debug", "mode.release")
-add_requires({ "flecs", configs = { debug = true } }, "glm", "stb", "spdlog", "box2d", "imgui v1.92.5-docking", "miniaudio")
+add_requires(
+	{ "flecs", configs = { debug = true } },
+	"glm",
+	"stb",
+	"spdlog",
+	"box2d",
+	"imgui v1.92.5-docking",
+	"miniaudio"
+)
 
 target("rogue_ball")
-    set_kind("binary")
-    set_pcxxheader("src/pch.hpp")
-    add_rules("sokol.shdc")
+set_kind("binary")
+set_pcxxheader("src/pch.hpp")
+add_rules("sokol.shdc")
 set_languages("cxx20")
 add_files("src/*.cpp")
 add_files("src/server/*.cpp")

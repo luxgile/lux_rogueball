@@ -7,6 +7,14 @@ struct DamageInfo {
   int damage;
 };
 
+struct cHealth {
+  int value;
+};
+
+struct cWeapon {
+  int damage;
+};
+
 struct eDealDamage {
   DamageInfo info;
 };

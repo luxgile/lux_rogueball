@@ -18,6 +18,14 @@ struct cVisual2Handle {
 
 struct cMainCamera {};
 
+// TODO: Decouple the component
+struct cText {
+  std::string text;
+  float size = 24.0f;
+  Srgba color = WHITE;
+  glm::vec2 position = {0.0f, 0.0f};
+};
+
 struct cCamera {
   float zoom = 1.0f;
 };

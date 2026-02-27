@@ -71,7 +71,14 @@ render_module::render_module(flecs::world &world) {
 
   world.system<const sWindowSize>("Draw HUD")
       .kind(flecs::PostUpdate)
-      .each([&render_server](const sWindowSize &window) {
+      .each([&render_server, &world](const sWindowSize &window) {
         render_server.draw_text(10, 30, "ROGUE BALL", 32.0f, WHITE);
+
+        // Draw all entities with a cText component
+        // TODO: Move this to a  separate system
+        world.query<const cText>().each([&render_server](const cText &t) {
+          render_server.draw_text(t.position.x, t.position.y, t.text.c_str(),
+                                  t.size, t.color);
+        });
       });
 }
