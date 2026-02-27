@@ -2,6 +2,7 @@
 #include "../engine_module.hpp"
 #include "flecs/addons/cpp/c_types.hpp"
 #include "flecs/addons/cpp/component.hpp"
+#include "flecs/addons/cpp/mixins/pipeline/decl.hpp"
 #include "glm/ext/vector_float2.hpp"
 #include "transform_module.hpp"
 
@@ -19,6 +20,14 @@ render_module::render_module(flecs::world &world) {
       .member<glm::vec2>("size")
       .add(flecs::With, world.component<cVisual2Handle>())
       .add(flecs::With, world.component<cWorldTransform2>());
+
+  world.component<cLabel>().member<std::string>("text").member<float>("size");
+  world.component<Srgba>()
+      .member<float>("r")
+      .member<float>("g")
+      .member<float>("b")
+      .member<float>("a");
+  world.component<cTint>().member<Srgba>("color");
 
   world.component<cVisual2Handle>().member<HandleId>("id");
 
@@ -69,16 +78,11 @@ render_module::render_module(flecs::world &world) {
         render_server.set_camera_position(glm::vec3(pos.value, 0.0f));
       });
 
-  world.system<const sWindowSize>("Draw HUD")
+  world.system<const cLabel, const cPosition2, cTint *>("Draw text")
       .kind(flecs::PostUpdate)
-      .each([&render_server, &world](const sWindowSize &window) {
-        render_server.draw_text(10, 30, "ROGUE BALL", 32.0f, WHITE);
-
-        // Draw all entities with a cText component
-        // TODO: Move this to a  separate system
-        world.query<const cText>().each([&render_server](const cText &t) {
-          render_server.draw_text(t.position.x, t.position.y, t.text.c_str(),
-                                  t.size, t.color);
-        });
+      .each([](const cLabel &label, const cPosition2 &pos, const cTint *tint) {
+        auto color = tint ? tint->color : WHITE;
+        Luxlib::instance().render_server.draw_text(
+            pos.value.x, pos.value.y, label.text.c_str(), label.size, color);
       });
 }
