@@ -9,6 +9,8 @@ struct cCharacter {};
 struct cPlayer {};
 struct cEnemy {};
 
+struct cHealthUI {};
+
 struct cDragData {
   glm::vec2 start = {0.0f, 0.0f};
   glm::vec2 end = {0.0f, 0.0f};

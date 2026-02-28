@@ -4,6 +4,7 @@
 #include "../modules/common_module.hpp"
 #include "../modules/input_module.hpp"
 #include "../modules/physics_module.hpp"
+#include "../modules/render_module.hpp"
 #include "../modules/transform_module.hpp"
 #include <random>
 
@@ -108,6 +109,12 @@ game_module::game_module(flecs::world &world) {
     entity.set(cFriction{0.0f});
     entity.set(cRestitution{1.0f});
     entity.set(cPhysicsShape{.type = ShapeType::Circle, .size = {24.0f, 0.0f}});
+
+    auto label = world.entity();
+    label.set(cPosition2{{0, 0}});
+    label.set(cLabel{"0", 32.0f});
+    label.add<cHealthUI>();
+    label.child_of(entity);
   });
 
   world.import <combat_module>();

@@ -77,8 +77,3 @@ main_camera {
 	cMainCamera
 	cPosition2: {value: {x: 0.0, y: 0.0}}
 }
-
-ui {
-	cLabel: {text: "Hello World", size: 32.0}
-	cPosition2: {value: {x: 16.0, y: 32.0}}
-}

@@ -270,20 +270,19 @@ physics_module::physics_module(flecs::world &world) {
       .kind(flecs::PreUpdate)
       .each([](flecs::iter &it, size_t, const sPhysicsWorld &world,
                sPhysicsTime &time) {
-        ImGui::InputFloat("Physics fixed step", &time.fixed_dt);
-
         // Iterate physics
         time.acc += stm_sec(stm_since(time.last_time)) * time.scale;
         time.last_time = stm_now();
+        auto iterations = 0;
         while (time.fixed_dt > 0.0f && time.acc >= time.fixed_dt) {
           b2World_Step(world.id, time.fixed_dt, 4);
           time.acc -= time.fixed_dt;
+          iterations += 1;
         }
 
-        ImGui::Text("stm_since raw: %llu", stm_since(time.last_time));
-        ImGui::Text("stm_sec converted: %f",
-                    stm_ms(stm_since(time.last_time)) / 1000.0f);
-        ImGui::Text("acc: %f", time.acc);
+        // Return early to avoid raising the same events multiple frames
+        if (iterations == 0)
+          return;
 
         // Trigger sensor events
         auto sensor_events = b2World_GetSensorEvents(world.id);
