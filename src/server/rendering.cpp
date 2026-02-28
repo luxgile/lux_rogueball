@@ -132,9 +132,8 @@ void RenderingServer::init() {
 void RenderingServer::draw_visuals() {
   sgl_defaults();
   sgl_matrix_mode_projection();
-  // Note: sgl_ortho uses bottom-up Y by default, fontstash expects top-down or
-  // consistent screen space.
-  sgl_ortho(0.0f, camera.size.x, camera.size.y, 0.0f, -1.0f, 1.0f);
+  // Note: we use a bottom-up coordinate system to match the rest of the engine.
+  sgl_ortho(0.0f, camera.size.x, 0.0f, camera.size.y, -1.0f, 1.0f);
 
   std::map<uint32_t, std::vector<HandleId>> batch_map;
   for (auto [id, visual] : visuals) {
@@ -278,10 +277,19 @@ void RenderingServer::draw_text(float x, float y, const char *text, float size,
   fonsClearState(fons_context);
   fonsSetFont(fons_context, font_normal);
   fonsSetSize(fons_context, size);
+  // In a bottom-up system, we use BOTTOM alignment so that the text grows
+  // upwards from the provided y-coordinate.
+  fonsSetAlign(fons_context, FONS_ALIGN_LEFT | FONS_ALIGN_BOTTOM);
   fonsSetColor(fons_context,
                sfons_rgba((uint8_t)(color.r * 255), (uint8_t)(color.g * 255),
                           (uint8_t)(color.b * 255), (uint8_t)(color.a * 255)));
-  fonsDrawText(fons_context, x, y, text, NULL);
+
+  sgl_matrix_mode_modelview();
+  sgl_push_matrix();
+  sgl_translate(x, y, 0);
+  sgl_scale(1, -1, 1);
+  fonsDrawText(fons_context, 0, 0, text, NULL);
+  sgl_pop_matrix();
 }
 
 auto RenderingServer::get_camera_zoom() const -> float { return camera.zoom; }

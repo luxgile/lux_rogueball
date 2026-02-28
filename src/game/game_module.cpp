@@ -112,8 +112,9 @@ game_module::game_module(flecs::world &world) {
 
     auto label = world.entity();
     label.set(cPosition2{{0, 0}});
-    label.set(cLabel{"0", 32.0f});
+    label.set(cLabel{"1", 32.0f});
     label.add<cHealthUI>();
+    label.add<cWorldTransform2>();
     label.child_of(entity);
   });
 
