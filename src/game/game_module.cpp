@@ -6,6 +6,7 @@
 #include "../modules/physics_module.hpp"
 #include "../modules/render_module.hpp"
 #include "../modules/transform_module.hpp"
+#include "debug_module.hpp"
 #include <random>
 
 static glm::vec2 viewport_to_world(glm::vec2 viewport_pos, glm::vec2 size) {
@@ -118,7 +119,39 @@ game_module::game_module(flecs::world &world) {
     label.child_of(entity);
   });
 
+  // Camera movement system
+  world.system<sInputState, cPosition2, cCamera>("Camera Movement")
+      .with<cMainCamera>()
+      .each([](flecs::iter &it, size_t, sInputState &input, cPosition2 &pos,
+               cCamera &camera) {
+        // Movement
+        const float SPEED = 300.0f;
+        auto delta = glm::vec2(0.0f);
+        if (input.pressed_keys[SAPP_KEYCODE_A]) {
+          delta.x = -1.0f;
+        }
+        if (input.pressed_keys[SAPP_KEYCODE_D]) {
+          delta.x = 1.0f;
+        }
+        if (input.pressed_keys[SAPP_KEYCODE_W]) {
+          delta.y = -1.0f;
+        }
+        if (input.pressed_keys[SAPP_KEYCODE_S]) {
+          delta.y = 1.0f;
+        }
+
+        if (input.pressed_keys[SAPP_KEYCODE_LEFT_SHIFT]) {
+          delta *= 3.0f;
+        }
+
+        pos.value -= delta * SPEED * it.delta_time();
+
+        // Zoom
+        camera.zoom += input.mouse_scroll * 0.1f;
+      });
+
   world.import <combat_module>();
+  world.import <debug_module>();
 
   world.script_run_file("./assets/game.flecs");
 }

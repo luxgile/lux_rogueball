@@ -7,5 +7,9 @@ input_module::input_module(flecs::world &world) {
       .member<glm::vec2>("mouse position")
       .add(flecs::Singleton);
 
+  world.system<sInputState>("Reset input")
+      .kind(flecs::OnStore)
+      .each([](sInputState &input) { input.mouse_scroll = 0.0f; });
+
   world.add<sInputState>();
 }

@@ -63,9 +63,8 @@ render_module::render_module(flecs::world &world) {
         visual.texture = sprite.texture;
       });
 
-  world.observer<const cCamera>()
-      .with<cMainCamera>()
-      .event(flecs::OnSet)
+  world.system<const cCamera>("Sync camera zoom")
+      .kind(flecs::OnStore)
       .each([&render_server](const cCamera &camera) {
         render_server.set_camera_zoom(camera.zoom);
       });

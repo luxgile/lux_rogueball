@@ -10,6 +10,7 @@
 struct sInputState {
   std::map<sapp_keycode, bool> pressed_keys;
   std::map<sapp_mousebutton, bool> pressed_mouse;
+  float mouse_scroll;
   glm::vec2 mouse_viewport_position;
 };
 

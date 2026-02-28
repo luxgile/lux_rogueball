@@ -125,12 +125,16 @@ void Luxlib::input(const sapp_event *event) {
     input->pressed_mouse[event->mouse_button] = false;
   }
 
+  if (event->type == SAPP_EVENTTYPE_MOUSE_SCROLL) {
+    input->mouse_scroll = event->scroll_y;
+  }
+
   // Keyboard
   if (event->type == SAPP_EVENTTYPE_KEY_DOWN) {
-    input->pressed_keys.insert({event->key_code, true});
+    input->pressed_keys[event->key_code] = true;
   }
 
   if (event->type == SAPP_EVENTTYPE_KEY_UP) {
-    input->pressed_keys.insert({event->key_code, false});
+    input->pressed_keys[event->key_code] = false;
   }
 }
