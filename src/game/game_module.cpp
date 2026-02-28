@@ -119,6 +119,17 @@ game_module::game_module(flecs::world &world) {
     label.child_of(entity);
   });
 
+  world.system<cLabel>("Update Health Text")
+      .with<cHealthUI>()
+      .each([](flecs::entity e, cLabel &label) {
+        auto parent = e.parent();
+        if (!parent.is_valid())
+          return;
+
+        if (auto health = parent.try_get<cHealth>()) {
+          label.text = std::to_string(health->value);
+        }
+      });
   // Camera movement system
   world.system<sInputState, cPosition2, cCamera>("Camera Movement")
       .with<cMainCamera>()

@@ -3,4 +3,7 @@
 - [x] Enable physics to get physics shapes from children entities.
 - [x] Add physics debug
 - [x] Damage system
-- [ ] Enemy spawning
+- [x] Enemy spawning
+- [x] Align text with world
+- [ ] Move to CMake
+- [ ] Improve IMGUI
