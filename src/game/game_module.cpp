@@ -112,7 +112,7 @@ game_module::game_module(flecs::world &world) {
     entity.set(cPhysicsShape{.type = ShapeType::Circle, .size = {24.0f, 0.0f}});
 
     auto label = world.entity();
-    label.set(cPosition2{{0, 0}});
+    label.set(cPosition2{{-8, -12}});
     label.set(cLabel{"1", 32.0f});
     label.add<cHealthUI>();
     label.add<cWorldTransform2>();

@@ -130,9 +130,15 @@ public:
   void set_camera_resolution(vec2 size);
   auto get_camera_resolution() const -> vec2;
 
-  auto screen_to_world(glm::vec2 viewport_pos) -> glm::vec2 {
-    auto world = viewport_pos - camera.size / 2.0f;
+  auto screen_to_world(glm::vec2 screen_pos) -> glm::vec2 {
+    auto world = screen_pos - camera.size / 2.0f;
     return glm::vec2{world.x, world.y};
+  }
+
+  auto world_to_screen(glm::vec2 world_pos) -> glm::vec2 {
+    auto offset = glm::vec2(camera.position);
+    offset.y = -offset.y;
+    return (world_pos + offset) * camera.zoom + camera.size / 2.0f;
   }
 
   HandleId new_visual2();

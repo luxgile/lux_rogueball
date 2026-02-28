@@ -77,11 +77,15 @@ render_module::render_module(flecs::world &world) {
         render_server.set_camera_position(glm::vec3(pos.value, 0.0f));
       });
 
-  world.system<const cLabel, const cPosition2, cTint *>("Draw text")
+  world.system<const cLabel, const cWorldTransform2, cTint *>("Draw text")
       .kind(flecs::PostUpdate)
-      .each([](const cLabel &label, const cPosition2 &pos, const cTint *tint) {
+      .each([&render_server](const cLabel &label, const cWorldTransform2 &xform,
+                             const cTint *tint) {
         auto color = tint ? tint->color : WHITE;
+        auto pos = xform.position();
+        auto real_pos = render_server.world_to_screen(pos);
+        auto real_size = label.size * render_server.get_camera_zoom();
         Luxlib::instance().render_server.draw_text(
-            pos.value.x, pos.value.y, label.text.c_str(), label.size, color);
+            real_pos.x, real_pos.y, label.text.c_str(), real_size, color);
       });
 }
