@@ -13,6 +13,7 @@ sapp_desc sokol_main(int argc, char *argv[]) {
       .width = 1280,
       .height = 720,
       .sample_count = 8,
+      // .fullscreen = true,
       .window_title = "luxlib",
   };
 }

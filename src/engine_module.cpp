@@ -38,12 +38,13 @@ engine_module::engine_module(flecs::world &world) {
         time.elapsed += time.delta;
         time.real_elapsed += time.real_delta;
 
-        ImGui::Separator();
+        ImGui::Begin("General");
         ImGui::Text("Delta: %f", time.delta);
         ImGui::Text("Elapsed: %f", time.elapsed);
         ImGui::Text("Real delta: %f", time.real_delta);
         ImGui::Text("Real elapsed: %f", time.real_elapsed);
         ImGui::Text("Time scale: %f", time.scale);
+        ImGui::End();
       });
 
   world.import <common_module>();

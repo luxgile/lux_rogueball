@@ -25,9 +25,9 @@ add_includedirs("libs/sokol/util")
 add_includedirs("libs/sokol/tests/ext")
 
 -- Adding sol2 for lua
-add_includedirs("libs/sol2/include")
-add_includedirs("libs/lua-5.4.8/src")
-add_links("lua")
+-- add_includedirs("libs/sol2/include")
+-- add_includedirs("libs/lua/src")
+-- add_links("lua")
 
 -- To debug includes
 if is_mode("debug") then

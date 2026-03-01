@@ -1,3 +1,4 @@
+/*
 #include "lua_module.hpp"
 #include "sol/forward.hpp"
 #include "spdlog/spdlog.h"
@@ -70,16 +71,17 @@ lua_module::lua_module(flecs::world &world) {
   world.system().kind(flecs::OnStart).run([&clua](flecs::iter &it) {
     clua.lua.script(
         R"(
-				local c = ecs.components
-				ecs.system({
-					name = 'DebugPosition',
-					query = {
-						get = [c.Position2],
-					},
-					each = function(p) 
-						print("My position is: " .. p.value.x .. ", " .. p.value.y)
-					end
-				})
-				)");
+                                local c = ecs.components
+                                ecs.system({
+                                        name = 'DebugPosition',
+                                        query = {
+                                                get = [c.Position2],
+                                        },
+                                        each = function(p)
+                                                print("My position is: " ..
+p.value.x .. ", " .. p.value.y) end
+                                })
+                                )");
   });
 }
+*/

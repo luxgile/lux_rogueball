@@ -1,4 +1,5 @@
 #pragma once
+/*
 
 #include "flecs.h"
 #include "flecs/addons/cpp/c_types.hpp"
@@ -17,3 +18,4 @@ struct sLuaState {
 struct lua_module {
   lua_module(flecs::world &world);
 };
+*/

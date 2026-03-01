@@ -49,7 +49,9 @@ void Luxlib::init() {
   last_time = stm_now();
 
   // Imgui setup
-  simgui_desc_t simgui_desc = {};
+  simgui_desc_t simgui_desc = {
+      .ini_filename = "imgui.ini",
+  };
   simgui_desc.logger.func = slog_func;
   simgui_setup(&simgui_desc);
   ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -77,6 +79,7 @@ void Luxlib::frame() {
 
   auto size = world.get<sWindowSize>();
   simgui_new_frame({size.width, size.height, dt, sapp_dpi_scale()});
+  ImGui::DockSpaceOverViewport();
   world.progress(dt);
 
   // Render
