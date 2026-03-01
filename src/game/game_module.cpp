@@ -7,6 +7,7 @@
 #include "../modules/render_module.hpp"
 #include "../modules/transform_module.hpp"
 #include "debug_module.hpp"
+#include "flecs/addons/cpp/mixins/script/decl.hpp"
 #include <random>
 
 static glm::vec2 viewport_to_world(glm::vec2 viewport_pos, glm::vec2 size) {
@@ -164,5 +165,25 @@ game_module::game_module(flecs::world &world) {
   world.import <combat_module>();
   world.import <debug_module>();
 
-  world.script_run_file("./assets/game.flecs");
+  auto main_script = world.script("main script")
+                         .filename("./assets/game.flecs")
+                         .run()
+                         .add<cGameplayScript>();
+
+  // Demo on how to unload a scene
+  world.system<sInputState>("scene test")
+      .each([](flecs::iter &it, size_t, sInputState &input) {
+        if (input.pressed_keys[SAPP_KEYCODE_Q]) {
+          auto main_script = it.world()
+                                 .query_builder()
+                                 .with<cGameplayScript>()
+                                 .build()
+                                 .first();
+          it.world()
+              .query_builder()
+              .with<flecs::Script>(main_script)
+              .build()
+              .each([](flecs::entity e) { e.destruct(); });
+        }
+      });
 }

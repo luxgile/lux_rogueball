@@ -9,6 +9,9 @@ struct cCharacter {};
 struct cPlayer {};
 struct cEnemy {};
 
+struct cMainMenuScript {};
+struct cGameplayScript {};
+
 struct cHealthUI {};
 
 struct cDragData {

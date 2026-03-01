@@ -79,7 +79,7 @@ void Luxlib::frame() {
 
   auto size = world.get<sWindowSize>();
   simgui_new_frame({size.width, size.height, dt, sapp_dpi_scale()});
-  ImGui::DockSpaceOverViewport();
+  // ImGui::DockSpaceOverViewport();
   world.progress(dt);
 
   // Render
